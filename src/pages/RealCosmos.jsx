@@ -173,6 +173,14 @@ export default function RealCosmos() {
     if (pos) trackedTargetRef.current = pos
   }, [focusOnEntry])
 
+  // Select the Sun on initial load so the camera is focused correctly
+  useEffect(() => {
+    const sunEntry = findCatalogEntry('sun')
+    if (sunEntry) {
+      selectEntry(sunEntry)
+    }
+  }, [selectEntry])
+
   const handleSearchQuery = useCallback((query) => {
     const match = searchCatalog(query)
     if (match) {
