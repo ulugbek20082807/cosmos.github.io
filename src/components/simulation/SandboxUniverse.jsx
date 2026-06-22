@@ -33,7 +33,16 @@ function StarGlowMaterial({ color, opacity = 1 }) {
         vec3 normal = normalize(vNormal);
         vec3 viewDir = normalize(vViewPosition);
         float intensity = max(0.0, dot(normal, viewDir));
-        float alpha = pow(intensity, 2.5) * opacity;
+        
+        // Smoother, more expansive falloff
+        float falloff = smoothstep(0.0, 1.0, intensity);
+        float alpha = pow(falloff, 3.5) * opacity;
+        
+        // Dithering to eliminate color banding (stripes)
+        float dither = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+        alpha += (dither - 0.5) * 0.025;
+        alpha = max(0.0, alpha);
+        
         gl_FragColor = vec4(glowColor, alpha);
       }
     `,
@@ -90,14 +99,14 @@ function TexturedBody({ body, radius, bodiesRef, onSelect }) {
           onPointerEnter={onPointerOver}
           onPointerLeave={onPointerOut}
         >
-          <sphereGeometry args={[Math.max(radius, 0.001), 32, 24]} />
+          <sphereGeometry args={[Math.max(radius, 0.001), 64, 64]} />
           <meshStandardMaterial {...materialProps} />
         </mesh>
       </Trail>
       {isEmissive && (
         <mesh>
-          <sphereGeometry args={[Math.max(radius * 3.5, 0.003), 32, 24]} />
-          <StarGlowMaterial color={body.color || '#ffffff'} opacity={0.6} />
+          <sphereGeometry args={[Math.max(radius * 4.0, 0.003), 64, 64]} />
+          <StarGlowMaterial color={body.color || '#ffffff'} opacity={0.5} />
         </mesh>
       )}
       {isEmissive && (
@@ -135,7 +144,7 @@ function ColoredBody({ body, radius, bodiesRef, onSelect }) {
           onPointerEnter={onPointerOver}
           onPointerLeave={onPointerOut}
         >
-          <sphereGeometry args={[Math.max(radius, 0.001), 32, 24]} />
+          <sphereGeometry args={[Math.max(radius, 0.001), 64, 64]} />
           {isEmissive ? (
             <meshStandardMaterial color={glowColor} emissive={glowColor} emissiveIntensity={2} />
           ) : (
@@ -145,8 +154,8 @@ function ColoredBody({ body, radius, bodiesRef, onSelect }) {
       </Trail>
       {isEmissive && (
         <mesh>
-          <sphereGeometry args={[Math.max(radius * 3.5, 0.003), 32, 24]} />
-          <StarGlowMaterial color={glowColor} opacity={0.6} />
+          <sphereGeometry args={[Math.max(radius * 4.0, 0.003), 64, 64]} />
+          <StarGlowMaterial color={glowColor} opacity={0.5} />
         </mesh>
       )}
       {isEmissive && (
