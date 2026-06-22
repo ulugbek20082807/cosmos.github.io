@@ -53,8 +53,42 @@ function stepNBodySingle(bodies, dt) {
     pos[0] += (vel[0] * dt) / METERS_PER_UNIT
     pos[1] += (vel[1] * dt) / METERS_PER_UNIT
     pos[2] += (vel[2] * dt) / METERS_PER_UNIT
-    return { ...body, velocity: vel, position: pos }
+    return { ...body, velocity: vel, position: pos, oldPosition: body.position }
   })
+}
+
+// Distance from point C to line segment P1-P2
+function pointToSegmentDistance(cx, cy, cz, p1x, p1y, p1z, p2x, p2y, p2z) {
+  const vx = p2x - p1x
+  const vy = p2y - p1y
+  const vz = p2z - p1z
+  
+  const wx = cx - p1x
+  const wy = cy - p1y
+  const wz = cz - p1z
+
+  const c1 = wx * vx + wy * vy + wz * vz
+  if (c1 <= 0) {
+    return Math.sqrt(wx * wx + wy * wy + wz * wz)
+  }
+
+  const c2 = vx * vx + vy * vy + vz * vz
+  if (c2 <= c1) {
+    const dx = cx - p2x
+    const dy = cy - p2y
+    const dz = cz - p2z
+    return Math.sqrt(dx * dx + dy * dy + dz * dz)
+  }
+
+  const b = c1 / c2
+  const closestX = p1x + b * vx
+  const closestY = p1y + b * vy
+  const closestZ = p1z + b * vz
+  
+  const dx = cx - closestX
+  const dy = cy - closestY
+  const dz = cz - closestZ
+  return Math.sqrt(dx * dx + dy * dy + dz * dz)
 }
 
 export function stepNBody(bodies, dt, timeScale) {
@@ -85,10 +119,17 @@ export function stepNBody(bodies, dt, timeScale) {
           let r2 = (b2.radiusKm || 1000) / 1_000_000
           if (b2.isSystem && b2.id === 'sun-gravity') r2 = 696340 / 1_000_000
 
-          const dx = b1.position[0] - b2.position[0]
-          const dy = b1.position[1] - b2.position[1]
-          const dz = b1.position[2] - b2.position[2]
-          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz)
+          const oldPos = b1.oldPosition || b1.position
+          const cx = b2.position[0]
+          const cy = b2.position[1]
+          const cz = b2.position[2]
+          
+          // Continuous collision check (line segment to sphere)
+          const dist = pointToSegmentDistance(
+            cx, cy, cz, 
+            oldPos[0], oldPos[1], oldPos[2],
+            b1.position[0], b1.position[1], b1.position[2]
+          )
           
           if (dist < r1 + r2) {
             isDestroyed = true

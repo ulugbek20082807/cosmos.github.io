@@ -5,8 +5,14 @@ import { getSolarObjectPosition } from '../simulation/SolarSystem'
 import { isSolarEntry } from '../../data/catalog'
 import { raDecToVector } from '../simulation/Starfield'
 
-function getTruePhysicalPositionMeters(obj, planetStates = null) {
+function getTruePhysicalPositionMeters(obj, planetStates = null, getPosition = null) {
   const METERS_PER_UNIT = 1_000_000 * 1000 // 1 unit = 1 million km = 1e9 meters
+  if (getPosition) {
+    const pos = getPosition(obj)
+    if (pos && Array.isArray(pos) && pos.every(Number.isFinite)) {
+      return pos.map((v) => v * METERS_PER_UNIT)
+    }
+  }
   if (planetStates && obj.id && planetStates[obj.id]) {
     return planetStates[obj.id].position.map((v) => v * METERS_PER_UNIT)
   }
@@ -23,7 +29,11 @@ function getTruePhysicalPositionMeters(obj, planetStates = null) {
   return [0, 0, 0]
 }
 
-function getWorldPos(obj, planetStates = null) {
+function getWorldPos(obj, planetStates = null, getPosition = null) {
+  if (getPosition) {
+    const pos = getPosition(obj)
+    if (pos && Array.isArray(pos) && pos.every(Number.isFinite)) return pos
+  }
   if (planetStates && obj.id && planetStates[obj.id]) {
     return planetStates[obj.id].position
   }
@@ -169,6 +179,7 @@ export function TravelStatistics({
   simTime = 0,
   planetStates = null,
   activeStats = null,
+  getPosition = null,
 }) {
   const [startId, setStartId] = useState('sun')
   const [endId, setEndId] = useState('earth')
@@ -207,11 +218,11 @@ export function TravelStatistics({
       return
     }
 
-    const startPos = getWorldPos(startObj, planetStates)
-    const endPos = getWorldPos(endObj, planetStates)
+    const startPos = getWorldPos(startObj, planetStates, getPosition)
+    const endPos = getWorldPos(endObj, planetStates, getPosition)
 
-    const startPhysM = getTruePhysicalPositionMeters(startObj, planetStates)
-    const endPhysM = getTruePhysicalPositionMeters(endObj, planetStates)
+    const startPhysM = getTruePhysicalPositionMeters(startObj, planetStates, getPosition)
+    const endPhysM = getTruePhysicalPositionMeters(endObj, planetStates, getPosition)
     const trueDistanceM = Math.hypot(
       endPhysM[0] - startPhysM[0],
       endPhysM[1] - startPhysM[1],

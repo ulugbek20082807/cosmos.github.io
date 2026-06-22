@@ -49,10 +49,16 @@ function getEntryPosition(entry, planetStates, simTime, bodies = []) {
         
         const frame = getMoonOrbitFrame(entry, moonOrbit, simTime)
         
+        // Apply the planet's axial tilt to the moon's local position 
+        // to match the <group rotation={[0, 0, tiltRad]}> in SolarSystem.jsx
+        const tiltRad = ((parentPlanet.tilt || 0) * Math.PI) / 180
+        const vec = frame.worldVec.clone()
+        vec.applyAxisAngle(new THREE.Vector3(0, 0, 1), tiltRad)
+        
         return [
-           parentPos[0] + frame.worldVec.x,
-           parentPos[1] + frame.worldVec.y,
-           parentPos[2] + frame.worldVec.z,
+           parentPos[0] + vec.x,
+           parentPos[1] + vec.y,
+           parentPos[2] + vec.z,
         ]
       }
     }
@@ -432,6 +438,7 @@ export default function RealCosmos() {
             simTime={uiSimTime}
             planetStates={planetStatesRef.current}
             activeStats={trajectoryData?.stats}
+            getPosition={(entry) => getEntryPosition(entry, planetStatesRef.current, uiSimTime, bodiesRef.current)}
           />
         </div>
       )}
