@@ -110,7 +110,7 @@ export default function Home() {
                 <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-cosmic-cyan">Mode 01</span>
               </div>
               <div className="relative z-10">
-                <h2 className="font-display text-lg tracking-[0.15em] uppercase text-white mb-2">Solar System</h2>
+                <h2 className="font-display text-lg tracking-[0.15em] uppercase text-white mb-2">Real Universe</h2>
                 <p className="text-slate-400 text-sm mb-6 leading-relaxed min-h-[40px]">
                   Explore realistic scales, planetary orbits, and calculated trajectories.
                 </p>
