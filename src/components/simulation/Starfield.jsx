@@ -12,42 +12,6 @@ export function raDecToVector(raDeg, decDeg, distance) {
   )
 }
 
-const nebulaVertexShader = `
-  varying vec2 vUv;
-  void main() {
-    vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`
-
-const nebulaFragmentShader = `
-  varying vec2 vUv;
-  
-  void main() {
-    // Create incredibly smooth, large-scale cosmic clouds using sine waves
-    vec2 p = vUv * 2.0;
-    
-    // Smooth, low-frequency wave math
-    float wave1 = sin(p.x * 3.1415 + p.y * 2.0);
-    float wave2 = cos(p.y * 3.1415 - p.x * 1.5);
-    float n = (wave1 + wave2) * 0.5 + 0.5; // Normalize to 0.0 - 1.0
-    
-    // Deep cosmic colors
-    vec3 color1 = vec3(0.01, 0.015, 0.04); // Void black-blue
-    vec3 color2 = vec3(0.06, 0.01, 0.12);  // Deep violet nebula
-    vec3 color3 = vec3(0.0, 0.08, 0.15);   // Cyan tint
-    
-    // Smooth blending
-    vec3 finalColor = mix(color1, color2, smoothstep(0.2, 0.8, n));
-    finalColor = mix(finalColor, color3, smoothstep(0.7, 1.0, n));
-    
-    // Add a slight radial darkening towards the poles (top/bottom)
-    float poleDarken = smoothstep(0.0, 0.3, vUv.y) * smoothstep(1.0, 0.7, vUv.y);
-    finalColor *= poleDarken;
-    
-    gl_FragColor = vec4(finalColor * 0.4, 1.0);
-  }
-`
 
 export function Starfield() {
   const ref = useRef()
@@ -70,23 +34,12 @@ export function Starfield() {
   })
 
   return (
-    <group>
-      <mesh>
-        <sphereGeometry args={[180000, 32, 32]} />
-        <shaderMaterial
-          vertexShader={nebulaVertexShader}
-          fragmentShader={nebulaFragmentShader}
-          side={THREE.BackSide}
-          depthWrite={false}
-        />
-      </mesh>
-      <points ref={ref}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-        </bufferGeometry>
-        <pointsMaterial size={1.2} color="#8899bb" transparent opacity={0.85} sizeAttenuation />
-      </points>
-    </group>
+    <points ref={ref}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial size={1.2} color="#8899bb" transparent opacity={0.85} sizeAttenuation />
+    </points>
   )
 }
 
