@@ -65,51 +65,53 @@ export function stepNBody(bodies, dt, timeScale) {
   const STEPS = 10
   const subDt = scaledDt / STEPS
   let current = bodies
-  for (let i = 0; i < STEPS; i++) {
-    current = stepNBodySingle(current, subDt)
-  }
-
-  // Check for collisions with custom spawned objects
-  const finalBodies = []
   const destroyed = []
   
-  for (let i = 0; i < current.length; i++) {
-    const b1 = current[i]
-    let isDestroyed = false
+  for (let step = 0; step < STEPS; step++) {
+    current = stepNBodySingle(current, subDt)
     
-    if (b1.type === 'custom') {
-      const r1 = (b1.radiusKm || 1000) / 1_000_000
-      for (let j = 0; j < current.length; j++) {
-        if (i === j) continue
-        const b2 = current[j]
-        let r2 = (b2.radiusKm || 1000) / 1_000_000
-        if (b2.isSystem && b2.id === 'sun-gravity') r2 = 696340 / 1_000_000
+    // Check collisions DURING sub-steps to prevent objects falling into a massive body
+    // from jumping through the core and being slingshotted out at extreme velocities.
+    const survivingBodies = []
+    for (let i = 0; i < current.length; i++) {
+      const b1 = current[i]
+      let isDestroyed = false
+      
+      if (b1.type === 'custom') {
+        const r1 = (b1.radiusKm || 1000) / 1_000_000
+        for (let j = 0; j < current.length; j++) {
+          if (i === j) continue
+          const b2 = current[j]
+          let r2 = (b2.radiusKm || 1000) / 1_000_000
+          if (b2.isSystem && b2.id === 'sun-gravity') r2 = 696340 / 1_000_000
 
-        const dx = b1.position[0] - b2.position[0]
-        const dy = b1.position[1] - b2.position[1]
-        const dz = b1.position[2] - b2.position[2]
-        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz)
-        
-        if (dist < r1 + r2) {
-          isDestroyed = true
-          b1.destroyedBy = b2.name
-          destroyed.push(b1)
-          break
+          const dx = b1.position[0] - b2.position[0]
+          const dy = b1.position[1] - b2.position[1]
+          const dz = b1.position[2] - b2.position[2]
+          const dist = Math.sqrt(dx * dx + dy * dy + dz * dz)
+          
+          if (dist < r1 + r2) {
+            isDestroyed = true
+            b1.destroyedBy = b2.name
+            destroyed.push(b1)
+            break
+          }
         }
       }
+      
+      if (!isDestroyed) {
+        survivingBodies.push(b1)
+      }
     }
-    
-    if (!isDestroyed) {
-      finalBodies.push(b1)
-    }
+    current = survivingBodies
   }
 
   // We attach destroyed bodies as a non-enumerable property so React/RealCosmos can check it
   if (destroyed.length > 0) {
-    Object.defineProperty(finalBodies, 'destroyedObjects', { value: destroyed, enumerable: false })
+    Object.defineProperty(current, 'destroyedObjects', { value: destroyed, enumerable: false })
   }
 
-  return finalBodies
+  return current
 }
 
 export function formatSimTime(seconds) {

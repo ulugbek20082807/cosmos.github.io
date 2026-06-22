@@ -61,8 +61,8 @@ export function AddObjectPanel({ onAdd, onClose, isOpen = true, existingBodies =
     if (velocity[0] === 0 && velocity[1] === 0 && velocity[2] === 0) {
       const rUnits = Math.sqrt(position[0]**2 + position[1]**2 + position[2]**2)
       if (rUnits > 0) {
-        // G*M (Sun) ~ 1.327e20. r in meters = rUnits * 1e6
-        const vCirc = Math.sqrt(1.327e14 / rUnits)
+        // G*M (Sun) ~ 1.327e20. r in meters = rUnits * 1e9
+        const vCirc = Math.sqrt(1.327e11 / rUnits)
         const vComet = vCirc * 0.6 // 60% of circular for a nice elliptical/comet orbit
         
         const normXZ = Math.sqrt(position[0]**2 + position[2]**2) || 1
@@ -282,6 +282,12 @@ export function AddObjectPanel({ onAdd, onClose, isOpen = true, existingBodies =
               className="w-full accent-cosmic-accent"
             />
           </Field>
+        )}
+
+        {error && (
+          <div className="text-red-400 text-[10px] font-mono mb-2 uppercase border border-red-500/30 bg-red-500/10 p-2">
+            {error}
+          </div>
         )}
 
         <button
