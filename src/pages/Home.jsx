@@ -88,9 +88,9 @@ export default function Home() {
             Navigation Interface v2026.171 · Cosmos Engine
           </p>
           <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold tracking-[0.08em] uppercase text-white mb-4">
-            Cosmic
+            Cosmos
             <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cosmic-accent via-cosmic-cyan to-cosmic-violet">
-              Navigation
+              Simulator
             </span>
           </h1>
           <p className="text-slate-400 text-sm md:text-base max-w-xl mx-auto leading-relaxed font-light">
@@ -109,13 +109,14 @@ export default function Home() {
                 <div className="w-1.5 h-1.5 rounded-full bg-cosmic-cyan animate-pulse" />
                 <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-cosmic-cyan">Mode 01</span>
               </div>
-              <h2 className="font-display text-lg tracking-[0.15em] uppercase text-white mb-2">Real Cosmos</h2>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Scale-accurate solar system with orbital mechanics, textured celestial bodies,
-                and deep-space catalog markers — galaxies, nebulae, and exoplanets as directional beacons.
-              </p>
-              <div className="mt-4 font-mono text-[10px] text-cosmic-accent/80 uppercase tracking-widest group-hover:text-cosmic-cyan transition-colors">
-                Initialize →
+              <div className="relative z-10">
+                <h2 className="font-display text-lg tracking-[0.15em] uppercase text-white mb-2">Solar System</h2>
+                <p className="text-slate-400 text-sm mb-6 leading-relaxed min-h-[40px]">
+                  Explore realistic scales, planetary orbits, and calculated trajectories.
+                </p>
+                <div className="mt-4 font-mono text-[10px] text-cosmic-accent/80 uppercase tracking-widest group-hover:text-cosmic-cyan transition-colors">
+                  Initialize →
+                </div>
               </div>
             </div>
           </Link>
@@ -130,13 +131,14 @@ export default function Home() {
                 <div className="w-1.5 h-1.5 rounded-full bg-cosmic-violet animate-pulse" />
                 <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-cosmic-violet">Mode 02</span>
               </div>
-              <h2 className="font-display text-lg tracking-[0.15em] uppercase text-white mb-2">Universe Sandbox</h2>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Empty void. Spawn custom objects at any coordinates, configure mass and velocity,
-                and simulate N-body gravitational dynamics with adjustable time flow.
-              </p>
-              <div className="mt-4 font-mono text-[10px] text-cosmic-violet/80 uppercase tracking-widest group-hover:text-cosmic-violet transition-colors">
-                Initialize →
+              <div className="relative z-10">
+                <h2 className="font-display text-lg tracking-[0.15em] uppercase text-white mb-2">Empty Universe</h2>
+                <p className="text-slate-400 text-sm mb-6 leading-relaxed min-h-[40px]">
+                  Create a custom star system. Spawn objects and observe gravity.
+                </p>
+                <div className="mt-4 font-mono text-[10px] text-cosmic-violet/80 uppercase tracking-widest group-hover:text-cosmic-violet transition-colors">
+                  Initialize →
+                </div>
               </div>
             </div>
           </Link>

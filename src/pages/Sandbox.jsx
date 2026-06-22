@@ -103,7 +103,7 @@ export default function Sandbox() {
         <Link to="/" className="font-display text-[10px] tracking-[0.3em] uppercase text-slate-500 hover:text-cosmic-violet transition-colors">
           ← Command
         </Link>
-        <h1 className="font-display text-xs tracking-[0.35em] uppercase text-white/80">Universe Sandbox</h1>
+        <h1 className="font-display text-xs tracking-[0.35em] uppercase text-white/80">Empty Universe</h1>
         <span className="font-mono text-[10px] text-cosmic-violet/60">SIM</span>
       </div>
 
