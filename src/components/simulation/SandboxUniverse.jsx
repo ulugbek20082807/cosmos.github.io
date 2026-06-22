@@ -34,16 +34,17 @@ function StarGlowMaterial({ color, opacity = 1 }) {
         vec3 viewDir = normalize(vViewPosition);
         float intensity = max(0.0, dot(normal, viewDir));
         
-        // Smoother, more expansive falloff
+        // Smoother falloff
         float falloff = smoothstep(0.0, 1.0, intensity);
-        float alpha = pow(falloff, 3.5) * opacity;
+        float alpha = pow(falloff, 3.0) * opacity;
         
-        // Dithering to eliminate color banding (stripes)
+        // Stronger dithering applied to both color and alpha to crush banding
         float dither = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
-        alpha += (dither - 0.5) * 0.025;
+        vec3 finalColor = glowColor + (dither - 0.5) * 0.06;
+        alpha += (dither - 0.5) * 0.04;
         alpha = max(0.0, alpha);
         
-        gl_FragColor = vec4(glowColor, alpha);
+        gl_FragColor = vec4(finalColor, alpha);
       }
     `,
     transparent: true,
