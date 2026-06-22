@@ -23,33 +23,29 @@ const nebulaVertexShader = `
 const nebulaFragmentShader = `
   varying vec2 vUv;
   
-  float rand(vec2 n) { 
-      return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
-  }
-  
-  float noise(vec2 p){
-      vec2 ip = floor(p);
-      vec2 u = fract(p);
-      u = u*u*(3.0-2.0*u);
-      
-      float res = mix(
-          mix(rand(ip),rand(ip+vec2(1.0,0.0)),u.x),
-          mix(rand(ip+vec2(0.0,1.0)),rand(ip+vec2(1.0,1.0)),u.x),u.y);
-      return res*res;
-  }
-
   void main() {
-    vec2 p = vUv * 4.0;
-    float n = noise(p) * 0.5 + noise(p * 2.0) * 0.25 + noise(p * 4.0) * 0.125;
+    // Create incredibly smooth, large-scale cosmic clouds using sine waves
+    vec2 p = vUv * 2.0;
     
-    vec3 color1 = vec3(0.01, 0.02, 0.05); // Void black-blue
-    vec3 color2 = vec3(0.05, 0.0, 0.15);  // Deep violet
-    vec3 color3 = vec3(0.0, 0.1, 0.2);    // Cyan tint
+    // Smooth, low-frequency wave math
+    float wave1 = sin(p.x * 3.1415 + p.y * 2.0);
+    float wave2 = cos(p.y * 3.1415 - p.x * 1.5);
+    float n = (wave1 + wave2) * 0.5 + 0.5; // Normalize to 0.0 - 1.0
     
-    vec3 finalColor = mix(color1, color2, n * 1.5);
-    finalColor = mix(finalColor, color3, smoothstep(0.6, 1.0, n));
+    // Deep cosmic colors
+    vec3 color1 = vec3(0.01, 0.015, 0.04); // Void black-blue
+    vec3 color2 = vec3(0.06, 0.01, 0.12);  // Deep violet nebula
+    vec3 color3 = vec3(0.0, 0.08, 0.15);   // Cyan tint
     
-    gl_FragColor = vec4(finalColor * 0.25, 1.0);
+    // Smooth blending
+    vec3 finalColor = mix(color1, color2, smoothstep(0.2, 0.8, n));
+    finalColor = mix(finalColor, color3, smoothstep(0.7, 1.0, n));
+    
+    // Add a slight radial darkening towards the poles (top/bottom)
+    float poleDarken = smoothstep(0.0, 0.3, vUv.y) * smoothstep(1.0, 0.7, vUv.y);
+    finalColor *= poleDarken;
+    
+    gl_FragColor = vec4(finalColor * 0.4, 1.0);
   }
 `
 
