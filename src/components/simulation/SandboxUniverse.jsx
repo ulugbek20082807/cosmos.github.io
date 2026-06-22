@@ -8,6 +8,7 @@ import { useSafeTexture } from '../../utils/textures'
 import { HoverRing, ObjectLabel } from './ObjectInteraction'
 import { useGlobalHover } from '../../hooks/useGlobalHover'
 import { StarGlowMaterial } from './StarGlowMaterial'
+import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing'
 
 const TEXTURE_MAP = {
   sun: TEXTURES.sun,
@@ -46,7 +47,7 @@ function TexturedBody({ body, radius, bodiesRef, onSelect }) {
 
   return (
     <group ref={groupRef} name={body.id}>
-      <Trail width={radius * 5} length={20} color={body.color || '#fff4a8'} attenuation={(t) => t * t}>
+      <Trail width={radius * 5} length={20} color={body.color || '#ffffff'} attenuation={(t) => t * t}>
         <mesh
           ref={ref}
           onClick={(e) => { e.stopPropagation(); onSelect?.(body.id) }}
@@ -54,7 +55,13 @@ function TexturedBody({ body, radius, bodiesRef, onSelect }) {
           onPointerLeave={onPointerOut}
         >
           <sphereGeometry args={[Math.max(radius, 0.001), 64, 64]} />
-          <meshStandardMaterial {...materialProps} />
+          {body.type === 'black_hole' || body.mass > 1e31 ? (
+            <meshBasicMaterial color="black" />
+          ) : isEmissive ? (
+            <meshStandardMaterial {...materialProps} />
+          ) : (
+            <meshPhongMaterial {...materialProps} />
+          )}
         </mesh>
       </Trail>
       {isEmissive && (
@@ -65,6 +72,12 @@ function TexturedBody({ body, radius, bodiesRef, onSelect }) {
       )}
       {isEmissive && (
         <pointLight color={body.color || '#ffffff'} intensity={2} distance={radius * 500} decay={2} />
+      )}
+      {(body.type === 'black_hole' || body.mass > 1e31) && (
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[radius * 1.5, radius * 4, 64]} />
+          <meshBasicMaterial color={body.color || '#ff6600'} transparent opacity={0.8} side={THREE.DoubleSide} />
+        </mesh>
       )}
       <HoverRing radius={radius} visible={hovered} />
       <ObjectLabel name={body.name} radius={radius} visible={hovered} />
@@ -115,6 +128,12 @@ function ColoredBody({ body, radius, bodiesRef, onSelect }) {
       {isEmissive && (
         <pointLight color={glowColor} intensity={2} distance={radius * 500} decay={2} />
       )}
+      {(body.type === 'black_hole' || body.mass > 1e31) && (
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[radius * 1.5, radius * 4, 64]} />
+          <meshBasicMaterial color={body.color || '#ff6600'} transparent opacity={0.8} side={THREE.DoubleSide} />
+        </mesh>
+      )}
       <HoverRing radius={radius} visible={hovered} />
       <ObjectLabel name={body.name} radius={radius} visible={hovered} />
     </group>
@@ -140,6 +159,10 @@ export function SandboxUniverse({ bodiesRef, onSelectBody, selectedId, showGrid 
   const visibleBodies = bodiesRef?.current?.filter((b) => !b.hidden && !b.isPlanet && !b.isSystem) || []
   return (
     <group>
+      <EffectComposer disableNormalPass>
+        <Bloom luminanceThreshold={1.1} luminanceSmoothing={0.9} height={300} opacity={1.5} mipmapBlur />
+        <Vignette eskil={false} offset={0.1} darkness={0.9} />
+      </EffectComposer>
       <ambientLight intensity={0.15} />
       <directionalLight position={[100, 200, 100]} intensity={0.6} />
       {showGrid && <gridHelper args={[2000, 40, '#1a3050', '#0d1828']} />}

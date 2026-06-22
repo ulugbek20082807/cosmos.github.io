@@ -19,7 +19,7 @@ import { HoverRing, ObjectLabel } from './ObjectInteraction'
 import { getMoonOrbitFrame } from '../../utils/orbitMath'
 import { useGlobalHover } from '../../hooks/useGlobalHover'
 import { StarGlowMaterial } from './StarGlowMaterial'
-
+import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing'
 function EarthShader({ planetId, orbitKm, planetStatesRef, simActive, simTimeRef, tilt, moon, onSelect, timeScale = 1 }) {
   const groupRef = useRef()
   const meshRef = useRef()
@@ -234,7 +234,7 @@ function Sun({ onSelect, simActive, timeScale = 1 }) {
         onPointerLeave={onPointerOut}
       >
         <sphereGeometry args={[radius, 64, 48]} />
-        <meshBasicMaterial map={sunTex} color={sunTex ? "#ffffff" : "#fff2a3"} />
+        <meshStandardMaterial map={sunTex} emissiveMap={sunTex} emissive={sunTex ? "#ffffff" : "#fff2a3"} emissiveIntensity={2} color="#ffffff" />
       </mesh>
       <pointLight color="#ffd37a" intensity={4.5} distance={3500} decay={1.2} />
       <HoverRing radius={radius} visible={hovered} />
@@ -253,6 +253,10 @@ export function SolarSystem({ planets, planetStatesRef, onSelectPlanet, simActiv
 
   return (
     <group>
+      <EffectComposer disableNormalPass>
+        <Bloom luminanceThreshold={1.1} luminanceSmoothing={0.9} height={300} opacity={1.5} mipmapBlur />
+        <Vignette eskil={false} offset={0.1} darkness={0.9} />
+      </EffectComposer>
       <Sun onSelect={onSelectPlanet} simActive={simActive} timeScale={timeScale} />
       <pointLight color="#fff8e0" intensity={3} distance={100000} decay={0} />
       <ambientLight intensity={0.08} />
