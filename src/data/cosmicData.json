@@ -1,0 +1,202 @@
+[
+  {
+    "id": "andromeda",
+    "name": "Andromeda Galaxy",
+    "type": "galaxy",
+    "distanceLy": 2537000,
+    "ra": 10.6847,
+    "dec": 41.2687,
+    "color": "#a78bfa",
+    "info": "Nearest major galaxy; on collision course with the Milky Way."
+  },
+  {
+    "id": "sagittarius-a",
+    "name": "Sagittarius A*",
+    "type": "black_hole",
+    "distanceLy": 26600,
+    "ra": 266.4168,
+    "dec": -29.0078,
+    "color": "#f97316",
+    "info": "Supermassive black hole at the Milky Way center."
+  },
+  {
+    "id": "sirius",
+    "name": "Sirius A",
+    "type": "star",
+    "distanceLy": 8.6,
+    "ra": 101.2872,
+    "dec": -16.7161,
+    "color": "#60a5fa",
+    "info": "Brightest star in Earth's night sky."
+  },
+  {
+    "id": "proxima-centauri",
+    "name": "Proxima Centauri",
+    "type": "star",
+    "distanceLy": 4.24,
+    "ra": 217.4289,
+    "dec": -62.6795,
+    "color": "#ef4444",
+    "info": "Nearest star to the Sun."
+  },
+  {
+    "id": "trappist-1",
+    "name": "TRAPPIST-1",
+    "type": "star",
+    "distanceLy": 40.66,
+    "ra": 346.6223,
+    "dec": -5.0414,
+    "color": "#dc2626",
+    "info": "Ultra-cool dwarf with seven known exoplanets."
+  },
+  {
+    "id": "betelgeuse",
+    "name": "Betelgeuse",
+    "type": "star",
+    "distanceLy": 642,
+    "ra": 88.7929,
+    "dec": 7.4071,
+    "color": "#fb923c",
+    "info": "Red supergiant in Orion; potential future supernova."
+  },
+  {
+    "id": "vega",
+    "name": "Vega",
+    "type": "star",
+    "distanceLy": 25.04,
+    "ra": 279.2347,
+    "dec": 38.7837,
+    "color": "#93c5fd",
+    "info": "Bright A-type star in Lyra."
+  },
+  {
+    "id": "polaris",
+    "name": "Polaris",
+    "type": "star",
+    "distanceLy": 433,
+    "ra": 37.9545,
+    "dec": 89.2641,
+    "color": "#fef08a",
+    "info": "Current north star; Cepheid variable."
+  },
+  {
+    "id": "crab-nebula",
+    "name": "Crab Nebula",
+    "type": "nebula",
+    "distanceLy": 6500,
+    "ra": 83.6331,
+    "dec": 22.0145,
+    "color": "#34d399",
+    "info": "Supernova remnant from AD 1054 event."
+  },
+  {
+    "id": "orion-nebula",
+    "name": "Orion Nebula",
+    "type": "nebula",
+    "distanceLy": 1344,
+    "ra": 83.8221,
+    "dec": -5.3911,
+    "color": "#22d3ee",
+    "info": "Stellar nursery visible to the naked eye."
+  },
+  {
+    "id": "pleiades",
+    "name": "Pleiades",
+    "type": "cluster",
+    "distanceLy": 444,
+    "ra": 56.8712,
+    "dec": 24.1051,
+    "color": "#818cf8",
+    "info": "Open star cluster in Taurus."
+  },
+  {
+    "id": "omega-centauri",
+    "name": "Omega Centauri",
+    "type": "cluster",
+    "distanceLy": 15800,
+    "ra": 201.697,
+    "dec": -47.4794,
+    "color": "#c084fc",
+    "info": "Massive globular cluster orbiting the Milky Way."
+  },
+  {
+    "id": "large-magellanic",
+    "name": "Large Magellanic Cloud",
+    "type": "galaxy",
+    "distanceLy": 163000,
+    "ra": 80.8942,
+    "dec": -69.7561,
+    "color": "#a855f7",
+    "info": "Irregular satellite galaxy of the Milky Way."
+  },
+  {
+    "id": "small-magellanic",
+    "name": "Small Magellanic Cloud",
+    "type": "galaxy",
+    "distanceLy": 200000,
+    "ra": 13.1867,
+    "dec": -72.8286,
+    "color": "#d946ef",
+    "info": "Dwarf galaxy companion to the Milky Way."
+  },
+  {
+    "id": "whirlpool",
+    "name": "Whirlpool Galaxy",
+    "type": "galaxy",
+    "distanceLy": 23000000,
+    "ra": 202.4696,
+    "dec": 47.1953,
+    "color": "#6366f1",
+    "info": "Classic face-on spiral galaxy (M51)."
+  },
+  {
+    "id": "sombrero",
+    "name": "Sombrero Galaxy",
+    "type": "galaxy",
+    "distanceLy": 29000000,
+    "ra": 189.9976,
+    "dec": -11.6231,
+    "color": "#8b5cf6",
+    "info": "Prominent edge-on spiral with dust lane."
+  },
+  {
+    "id": "cygnus-x1",
+    "name": "Cygnus X-1",
+    "type": "black_hole",
+    "distanceLy": 6100,
+    "ra": 299.5903,
+    "dec": 35.2017,
+    "color": "#ea580c",
+    "info": "First widely accepted stellar-mass black hole."
+  },
+  {
+    "id": "kepler-452b",
+    "name": "Kepler-452b",
+    "type": "exoplanet",
+    "distanceLy": 1402,
+    "ra": 295.4665,
+    "dec": 44.5074,
+    "color": "#4ade80",
+    "info": "Super-Earth in the habitable zone of a Sun-like star."
+  },
+  {
+    "id": "hd-209458b",
+    "name": "HD 209458 b",
+    "type": "exoplanet",
+    "distanceLy": 159,
+    "ra": 330.7959,
+    "dec": 18.8843,
+    "color": "#2dd4bf",
+    "info": "First exoplanet detected via transit spectroscopy."
+  },
+  {
+    "id": "barnards-star",
+    "name": "Barnard's Star",
+    "type": "star",
+    "distanceLy": 5.96,
+    "ra": 269.454,
+    "dec": 4.6683,
+    "color": "#f87171",
+    "info": "Red dwarf with highest known proper motion."
+  }
+]

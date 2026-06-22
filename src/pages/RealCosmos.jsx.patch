@@ -1,0 +1,126 @@
+--- src/pages/RealCosmos.jsx
++++ src/pages/RealCosmos.jsx
+@@ -65,37 +65,49 @@
+   const [viewScale, setViewScale] = useState(1)
+   const [playing, setPlaying] = useState(true)
+   const [timeScale, setTimeScale] = useState(86400)
+-  const [simTime, setSimTime] = useState(0)
++  
++  // Physics engine refs (Zero-lag 60fps)
++  const simTimeRef = useRef(0)
++  const bodiesRef = useRef(INITIAL_BODIES)
++  const planetStatesRef = useRef({})
++  
++  // UI Throttled state
++  const [uiSimTime, setUiSimTime] = useState(0)
++  const [uiBodies, setUiBodies] = useState(INITIAL_BODIES)
++  const lastUiUpdateTime = useRef(0)
++  
+   const [selectedEntry, setSelectedEntry] = useState(null)
+   const [searchMarkerPos, setSearchMarkerPos] = useState(null)
+   const [showAddPanel, setShowAddPanel] = useState(false)
+-  const [bodies, setBodies] = useState(INITIAL_BODIES)
+   const [trajectoryData, setTrajectoryData] = useState(null)
+   const [leftPanelOpen, setLeftPanelOpen] = useState(true)
+   const [rightPanelOpen, setRightPanelOpen] = useState(true)
+   const focusCounter = useRef(0)
+   const [focusRequest, setFocusRequest] = useState(null)
+-  const trackedTargetRef = useRef(null)
++  
++  // Raw vector tracking for frame-perfect camera
++  const trackedTargetWorldPos = useRef(new THREE.Vector3())
++  
+   const [collisionWarning, setCollisionWarning] = useState(null)
+ 
+   const simActive = playing && timeScale > 0
+ 
+-  const planetStates = useMemo(() => {
+-    const map = {}
+-    bodies.forEach((b) => {
+-      if (b.isPlanet) map[b.id] = { position: b.position, velocity: b.velocity }
+-    })
+-    return map
+-  }, [bodies])
+-
+-  const customBodies = useMemo(() => bodies.filter((b) => !b.isPlanet && !b.isSystem), [bodies])
++  // Initialize planetStatesRef mapping once
++  if (Object.keys(planetStatesRef.current).length === 0) {
++    bodiesRef.current.forEach((b) => {
++      if (b.isPlanet) planetStatesRef.current[b.id] = { position: b.position, velocity: b.velocity }
++    })
++  }
++
++  const customBodies = useMemo(() => uiBodies.filter((b) => !b.isPlanet && !b.isSystem), [uiBodies])
+ 
+   const handleTimeUpdate = useCallback((dt) => {
+-    setSimTime((t) => {
+-      const nextTime = t + dt
++    simTimeRef.current += dt
+       
+-      setBodies((prev) => {
+-        const nextBodies = stepNBody(prev, dt, 1)
++    const nextBodies = stepNBody(bodiesRef.current, dt, 1)
++    bodiesRef.current = nextBodies
++    
++    nextBodies.forEach((b) => {
++      if (b.isPlanet && planetStatesRef.current[b.id]) {
++        planetStatesRef.current[b.id].position = b.position
++        planetStatesRef.current[b.id].velocity = b.velocity
++      }
++    })
+         
+-        // Check for collisions
+-        if (nextBodies.destroyedObjects && nextBodies.destroyedObjects.length > 0) {
+-          nextBodies.destroyedObjects.forEach(destroyedObj => {
+-            setCollisionWarning(`⚠️ Crash Detected! ${destroyedObj.name} crashed into ${destroyedObj.destroyedBy}.`)
+-            setTimeout(() => setCollisionWarning(null), 8000)
+-            if (selectedEntry?.id === destroyedObj.id) {
+-              setSelectedEntry(null)
+-            }
+-          })
+-        }
++    // Check for collisions (UI state is fine for this)
++    if (nextBodies.destroyedObjects && nextBodies.destroyedObjects.length > 0) {
++      nextBodies.destroyedObjects.forEach(destroyedObj => {
++        setCollisionWarning(`⚠️ Crash Detected! ${destroyedObj.name} crashed into ${destroyedObj.destroyedBy}.`)
++        setTimeout(() => setCollisionWarning(null), 8000)
++        if (selectedEntry?.id === destroyedObj.id) {
++          setSelectedEntry(null)
++        }
++      })
++    }
++    
++    // Throttle UI updates to 10 FPS (100ms) to avoid React render lag
++    const now = performance.now()
++    if (now - lastUiUpdateTime.current > 100) {
++      setUiSimTime(simTimeRef.current)
++      setUiBodies([...nextBodies])
++      lastUiUpdateTime.current = now
++    }
+         
+-        return nextBodies
+-      })
+-      
+-      return nextTime
+-    })
+   }, [selectedEntry])
+ 
+-  // Update tracking position AFTER React renders, so it matches the visual mesh positions.
+-  // This eliminates the 1-frame desync that caused trembling.
+-  useLayoutEffect(() => {
+-    if (selectedEntry) {
+-      const pos = getEntryPosition(selectedEntry, planetStates, simTime, bodies)
+-      if (pos && pos.every(Number.isFinite)) {
+-        trackedTargetRef.current = pos
+-      }
+-    } else {
+-      trackedTargetRef.current = null
+-    }
+-  }, [selectedEntry, planetStates, simTime, bodies])
+-
+   const handleSearchResult = (entry) => {
+     selectEntry(entry)
+-    const pos = getEntryPosition(entry, planetStates, simTime, bodies)
++    const pos = getEntryPosition(entry, planetStatesRef.current, simTimeRef.current, bodiesRef.current)
+     if (pos) {
+       setSearchMarkerPos({ position: pos, radius: getVisualRadius(entry) })
