@@ -111,7 +111,7 @@ export function stepNBody(bodies, dt, timeScale) {
       const b1 = current[i]
       let isDestroyed = false
       
-      if (b1.type === 'custom') {
+      if (!b1.isSystem && !b1.isPlanet) {
         const r1 = (b1.radiusKm || 1000) / 1_000_000
         for (let j = 0; j < current.length; j++) {
           if (i === j) continue

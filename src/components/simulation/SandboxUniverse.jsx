@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Trail } from '@react-three/drei'
@@ -7,6 +7,44 @@ import { TEXTURES } from '../../data/solarSystemData'
 import { useSafeTexture } from '../../utils/textures'
 import { HoverRing, ObjectLabel } from './ObjectInteraction'
 import { useGlobalHover } from '../../hooks/useGlobalHover'
+
+function StarGlowMaterial({ color, opacity = 1 }) {
+  const shader = useMemo(() => ({
+    uniforms: {
+      glowColor: { value: new THREE.Color(color) },
+      opacity: { value: opacity },
+    },
+    vertexShader: `
+      varying vec3 vNormal;
+      varying vec3 vViewPosition;
+      void main() {
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        vViewPosition = -mvPosition.xyz;
+        vNormal = normalMatrix * normal;
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 glowColor;
+      uniform float opacity;
+      varying vec3 vNormal;
+      varying vec3 vViewPosition;
+      void main() {
+        vec3 normal = normalize(vNormal);
+        vec3 viewDir = normalize(vViewPosition);
+        float intensity = max(0.0, dot(normal, viewDir));
+        float alpha = pow(intensity, 2.5) * opacity;
+        gl_FragColor = vec4(glowColor, alpha);
+      }
+    `,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    side: THREE.FrontSide,
+  }), [color, opacity])
+
+  return <shaderMaterial attach="material" args={[shader]} />
+}
 
 const TEXTURE_MAP = {
   sun: TEXTURES.sun,
@@ -58,8 +96,8 @@ function TexturedBody({ body, radius, bodiesRef, onSelect }) {
       </Trail>
       {isEmissive && (
         <mesh>
-          <sphereGeometry args={[Math.max(radius * 1.5, 0.002), 32, 24]} />
-          <meshBasicMaterial color={body.color || '#ffffff'} transparent opacity={0.3} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.BackSide} />
+          <sphereGeometry args={[Math.max(radius * 3.5, 0.003), 32, 24]} />
+          <StarGlowMaterial color={body.color || '#ffffff'} opacity={0.6} />
         </mesh>
       )}
       {isEmissive && (
@@ -107,8 +145,8 @@ function ColoredBody({ body, radius, bodiesRef, onSelect }) {
       </Trail>
       {isEmissive && (
         <mesh>
-          <sphereGeometry args={[Math.max(radius * 1.5, 0.002), 32, 24]} />
-          <meshBasicMaterial color={glowColor} transparent opacity={0.3} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.BackSide} />
+          <sphereGeometry args={[Math.max(radius * 3.5, 0.003), 32, 24]} />
+          <StarGlowMaterial color={glowColor} opacity={0.6} />
         </mesh>
       )}
       {isEmissive && (

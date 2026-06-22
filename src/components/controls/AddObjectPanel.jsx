@@ -34,7 +34,16 @@ export function AddObjectPanel({ onAdd, onClose, isOpen = true, existingBodies =
   const [form, setForm] = useState({ ...defaultForm })
   const [error, setError] = useState('')
 
-  const update = (key, val) => setForm((f) => ({ ...f, [key]: val }))
+  const update = (key, val) => setForm((f) => {
+    const next = { ...f, [key]: val }
+    if (key === 'emissive' && val === true) {
+      next.type = 'star'
+    }
+    if (key === 'type' && val === 'star') {
+      next.emissive = true
+    }
+    return next
+  })
   const updateVec = (key, idx, val) =>
     setForm((f) => {
       const arr = [...f[key]]
