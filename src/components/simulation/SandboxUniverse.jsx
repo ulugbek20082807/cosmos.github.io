@@ -55,16 +55,16 @@ function TexturedBody({ body, radius, bodiesRef, onSelect }) {
           <sphereGeometry args={[Math.max(radius, 0.001), 32, 24]} />
           <meshStandardMaterial {...materialProps} />
         </mesh>
-        {isEmissive && (
-          <mesh>
-            <sphereGeometry args={[Math.max(radius * 1.5, 0.002), 32, 24]} />
-            <meshBasicMaterial color={body.color || '#ffffff'} transparent opacity={0.3} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.BackSide} />
-          </mesh>
-        )}
-        {isEmissive && (
-          <pointLight color={body.color || '#ffffff'} intensity={2} distance={radius * 500} decay={2} />
-        )}
       </Trail>
+      {isEmissive && (
+        <mesh>
+          <sphereGeometry args={[Math.max(radius * 1.5, 0.002), 32, 24]} />
+          <meshBasicMaterial color={body.color || '#ffffff'} transparent opacity={0.3} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.BackSide} />
+        </mesh>
+      )}
+      {isEmissive && (
+        <pointLight color={body.color || '#ffffff'} intensity={2} distance={radius * 500} decay={2} />
+      )}
       <HoverRing radius={radius} visible={hovered} />
       <ObjectLabel name={body.name} radius={radius} visible={hovered} />
     </group>
@@ -104,16 +104,16 @@ function ColoredBody({ body, radius, bodiesRef, onSelect }) {
             <meshPhongMaterial color={glowColor} />
           )}
         </mesh>
-        {isEmissive && (
-          <mesh>
-            <sphereGeometry args={[Math.max(radius * 1.5, 0.002), 32, 24]} />
-            <meshBasicMaterial color={glowColor} transparent opacity={0.3} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.BackSide} />
-          </mesh>
-        )}
-        {isEmissive && (
-          <pointLight color={glowColor} intensity={2} distance={radius * 500} decay={2} />
-        )}
       </Trail>
+      {isEmissive && (
+        <mesh>
+          <sphereGeometry args={[Math.max(radius * 1.5, 0.002), 32, 24]} />
+          <meshBasicMaterial color={glowColor} transparent opacity={0.3} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.BackSide} />
+        </mesh>
+      )}
+      {isEmissive && (
+        <pointLight color={glowColor} intensity={2} distance={radius * 500} decay={2} />
+      )}
       <HoverRing radius={radius} visible={hovered} />
       <ObjectLabel name={body.name} radius={radius} visible={hovered} />
     </group>
