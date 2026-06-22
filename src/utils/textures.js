@@ -1,25 +1,35 @@
 import { useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 
+// Vite injects BASE_URL from the `base` config (e.g. "/cosmos.github.io/")
+const BASE = import.meta.env.BASE_URL
+
+function tex(path) {
+  // External URLs stay as-is; local paths get the base prefix
+  if (path.startsWith('http')) return path
+  // Avoid double slashes: BASE already ends with /
+  return BASE + path.replace(/^\//, '')
+}
+
 export const TEXTURES = {
-  sun:        '/textures/nasa/sun.jpg',
-  star:       '/textures/nasa/sun.jpg',
-  mercury:    '/textures/nasa/mercury.jpg',
-  venus:      '/textures/nasa/venus.jpg',
-  earthDay:   '/textures/nasa/earth.jpg',
-  moon:       '/textures/nasa/moon.jpg',
-  mars:       '/textures/nasa/mars.jpg',
-  jupiter:    '/textures/nasa/jupiter.jpg',
-  saturn:     '/textures/nasa/saturn.jpg',
-  saturnRing: '/textures/nasa/saturn_ring.png',
-  uranus:     '/textures/nasa/uranus.jpg',
-  uranusRing: '/textures/nasa/uranus_ring.png',
-  neptune:    '/textures/nasa/neptune.jpg',
-  pluto:      '/textures/nasa/pluto.jpg',
-  io:         '/textures/nasa/io.jpg',
-  europa:     '/textures/nasa/europa.jpg',
-  ganymede:   '/textures/nasa/ganymede.jpg',
-  callisto:   '/textures/nasa/callisto.jpg',
+  sun:        tex('/textures/nasa/sun.jpg'),
+  star:       tex('/textures/nasa/sun.jpg'),
+  mercury:    tex('/textures/nasa/mercury.jpg'),
+  venus:      tex('/textures/nasa/venus.jpg'),
+  earthDay:   tex('/textures/nasa/earth.jpg'),
+  moon:       tex('/textures/nasa/moon.jpg'),
+  mars:       tex('/textures/nasa/mars.jpg'),
+  jupiter:    tex('/textures/nasa/jupiter.jpg'),
+  saturn:     tex('/textures/nasa/saturn.jpg'),
+  saturnRing: tex('/textures/nasa/saturn_ring.png'),
+  uranus:     tex('/textures/nasa/uranus.jpg'),
+  uranusRing:  tex('/textures/nasa/uranus_ring.png'),
+  neptune:    tex('/textures/nasa/neptune.jpg'),
+  pluto:      tex('/textures/nasa/pluto.jpg'),
+  io:         tex('/textures/nasa/io.jpg'),
+  europa:     tex('/textures/nasa/europa.jpg'),
+  ganymede:   tex('/textures/nasa/ganymede.jpg'),
+  callisto:   tex('/textures/nasa/callisto.jpg'),
 
   // Saturn Moons
   mimas:      'https://upload.wikimedia.org/wikipedia/commons/5/5e/Mimas_Masked.jpg',
@@ -33,13 +43,13 @@ export const TEXTURES = {
   // Uranus Moons
   miranda:    'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Miranda_mosaic_in_color_-_Voyager_2.png/1280px-Miranda_mosaic_in_color_-_Voyager_2.png',
   ariel:      'https://upload.wikimedia.org/wikipedia/commons/8/84/Ariel_in_monochrome.jpg',
-  umbriel:    '/textures/nasa/moon.jpg', // Wikipedia thumbnail missing, using generic
-  titania:    '/textures/nasa/titania.jpg',
-  oberon:     '/textures/nasa/oberon.jpg',
+  umbriel:    tex('/textures/nasa/moon.jpg'), // Wikipedia thumbnail missing, using generic
+  titania:    tex('/textures/nasa/titania.jpg'),
+  oberon:     tex('/textures/nasa/oberon.jpg'),
 
   // Neptune Moons
-  triton:     '/textures/nasa/triton.jpg',
-  nereid:     '/textures/nasa/nereid.jpg',
+  triton:     tex('/textures/nasa/triton.jpg'),
+  nereid:     tex('/textures/nasa/nereid.jpg'),
 }
 
 export const REMOTE_TEXTURES = TEXTURES
@@ -52,7 +62,7 @@ export function useSafeTexture(url) {
   // If no url, we can't call useTexture because hooks can't be conditional.
   // In our app, the urls are static strings, so it's fine.
   // We provide a fallback just in case to avoid breaking hook rules.
-  const tex = useTexture(url || '/textures/nasa/sun.jpg')
+  const tex = useTexture(url || TEXTURES.sun)
   
   // Set SRGB color space as required by modern Three.js for color maps
   if (tex && tex.colorSpace !== THREE.SRGBColorSpace) {
@@ -67,3 +77,4 @@ export function useSafeTexture(url) {
 export function useSafeTextureDirect(key) {
   return useSafeTexture(TEXTURES[key])
 }
+
