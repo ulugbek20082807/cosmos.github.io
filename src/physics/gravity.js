@@ -112,12 +112,13 @@ export function stepNBody(bodies, dt, timeScale) {
       let isDestroyed = false
       
       if (!b1.isSystem && !b1.isPlanet) {
-        const r1 = (b1.radiusKm || 1000) / 1_000_000
+        let r1 = b1.radiusKm ? (Math.log10(b1.radiusKm / 6371 + 1) * 0.15 + 0.05) : 0.05
         for (let j = 0; j < current.length; j++) {
           if (i === j) continue
           const b2 = current[j]
-          let r2 = (b2.radiusKm || 1000) / 1_000_000
-          if (b2.isSystem && b2.id === 'sun-gravity') r2 = 696340 / 1_000_000
+          let r2 = b2.radiusKm ? (Math.log10(b2.radiusKm / 6371 + 1) * 0.15 + 0.05) : 0.05
+          if (b2.isSystem && b2.id === 'sun-gravity') r2 = (Math.log10(696340 / 6371 + 1) * 0.15 + 0.05)
+
 
           const oldPos = b1.oldPosition || b1.position
           const cx = b2.position[0]
