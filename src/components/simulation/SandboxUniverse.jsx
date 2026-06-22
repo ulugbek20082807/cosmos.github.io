@@ -38,8 +38,9 @@ function TexturedBody({ body, radius, bodiesRef, onSelect }) {
     if (ref.current && body.emissive) ref.current.rotation.y += delta * 0.2
   })
 
-  const materialProps = body.emissive
-    ? { map: texture, emissiveMap: texture, emissive: body.color || '#fff4a8', emissiveIntensity: body.emissiveIntensity ?? 2, color: body.color || '#fff4a8' }
+  const isEmissive = body.type === 'star' || body.emissive
+  const materialProps = isEmissive
+    ? { map: texture, emissiveMap: texture, emissive: body.color || '#ffffff', emissiveIntensity: body.emissiveIntensity ?? 2, color: body.color || '#ffffff' }
     : { map: texture, color: texture ? '#ffffff' : (body.color || '#6699cc') }
 
   return (
@@ -54,6 +55,15 @@ function TexturedBody({ body, radius, bodiesRef, onSelect }) {
           <sphereGeometry args={[Math.max(radius, 0.001), 32, 24]} />
           <meshStandardMaterial {...materialProps} />
         </mesh>
+        {isEmissive && (
+          <mesh>
+            <sphereGeometry args={[Math.max(radius * 1.5, 0.002), 32, 24]} />
+            <meshBasicMaterial color={body.color || '#ffffff'} transparent opacity={0.3} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.BackSide} />
+          </mesh>
+        )}
+        {isEmissive && (
+          <pointLight color={body.color || '#ffffff'} intensity={2} distance={radius * 500} decay={2} />
+        )}
       </Trail>
       <HoverRing radius={radius} visible={hovered} />
       <ObjectLabel name={body.name} radius={radius} visible={hovered} />
@@ -65,6 +75,9 @@ function ColoredBody({ body, radius, bodiesRef, onSelect }) {
   const groupRef = useRef()
   const ref = useRef()
   const { hovered, onPointerOver, onPointerOut } = useGlobalHover(body.id)
+  
+  const isEmissive = body.type === 'star' || body.emissive
+  const glowColor = body.color || (isEmissive ? '#fff4a8' : '#6699cc')
 
   useFrame(() => {
     if (groupRef.current) {
@@ -85,8 +98,21 @@ function ColoredBody({ body, radius, bodiesRef, onSelect }) {
           onPointerLeave={onPointerOut}
         >
           <sphereGeometry args={[Math.max(radius, 0.001), 32, 24]} />
-          <meshPhongMaterial color={body.color || '#6699cc'} />
+          {isEmissive ? (
+            <meshStandardMaterial color={glowColor} emissive={glowColor} emissiveIntensity={2} />
+          ) : (
+            <meshPhongMaterial color={glowColor} />
+          )}
         </mesh>
+        {isEmissive && (
+          <mesh>
+            <sphereGeometry args={[Math.max(radius * 1.5, 0.002), 32, 24]} />
+            <meshBasicMaterial color={glowColor} transparent opacity={0.3} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.BackSide} />
+          </mesh>
+        )}
+        {isEmissive && (
+          <pointLight color={glowColor} intensity={2} distance={radius * 500} decay={2} />
+        )}
       </Trail>
       <HoverRing radius={radius} visible={hovered} />
       <ObjectLabel name={body.name} radius={radius} visible={hovered} />

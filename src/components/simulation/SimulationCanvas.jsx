@@ -145,10 +145,10 @@ function Controls({ controlsRef, viewScale, onViewScaleChange, isFocusAnimating 
     const dist = camera.position.distanceTo(controlsRef.current.target)
     if (dist > 0.0001) {
       const computedScale = baseDistance.current / Math.max(dist, 0.0001)
-      const roundedDist = Number(dist.toFixed(2))
-      if (Math.abs(roundedDist - lastSentScale.current) > Math.max(0.05, roundedDist * 0.01)) {
-        lastSentScale.current = roundedDist
-        if (onViewScaleChange) onViewScaleChange(roundedDist)
+      const roundedScale = Number(computedScale.toFixed(4))
+      if (Math.abs(roundedScale - lastSentScale.current) > Math.max(0.01, roundedScale * 0.01)) {
+        lastSentScale.current = roundedScale
+        if (onViewScaleChange) onViewScaleChange(roundedScale)
       }
     }
   })
@@ -159,7 +159,8 @@ function Controls({ controlsRef, viewScale, onViewScaleChange, isFocusAnimating 
       const target = controlsRef.current.target
       const dir = camera.position.clone().sub(target).normalize()
       if (dir.lengthSq() < 0.0001) dir.set(0, 0, 1)
-      camera.position.copy(target).add(dir.multiplyScalar(Math.max(viewScale, 0.0001)))
+      const dist = baseDistance.current / Math.max(viewScale, 0.0001)
+      camera.position.copy(target).add(dir.multiplyScalar(dist))
       controlsRef.current.update()
       lastSentScale.current = viewScale
     }

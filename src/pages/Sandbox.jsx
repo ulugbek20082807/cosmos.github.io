@@ -22,6 +22,7 @@ export default function Sandbox() {
   const [trajectoryData, setTrajectoryData] = useState(null)
   const focusCounter = useRef(0)
   const [focusRequest, setFocusRequest] = useState(null)
+  const [toasts, setToasts] = useState([])
 
   const handlePhysicsStep = useCallback((dt) => {
     setSimTime((t) => t + dt)
@@ -30,9 +31,15 @@ export default function Sandbox() {
 
     // Check for collisions and remove destroyed bodies
     if (next.destroyedObjects && next.destroyedObjects.length > 0) {
+      const newToasts = []
       next.destroyedObjects.forEach(destroyedObj => {
         if (selectedId === destroyedObj.id) setSelectedId(null)
+        newToasts.push({ id: Date.now() + Math.random(), message: `Object destroyed: ${destroyedObj.name} crashed.` })
       })
+      setToasts(prev => [...prev, ...newToasts].slice(-5)) // keep max 5 toasts
+      setTimeout(() => {
+        setToasts(prev => prev.filter(t => !newToasts.find(nt => nt.id === t.id)))
+      }, 5000)
     }
 
     // Throttle UI update to ~10 FPS (100ms)
@@ -189,6 +196,16 @@ export default function Sandbox() {
           )}
         </div>
       </div>
+
+      {/* Toasts */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none">
+        {toasts.map(t => (
+          <div key={t.id} className="glass-panel px-4 py-2 text-white text-xs font-mono border-red-500/50 bg-red-500/20 backdrop-blur-md shadow-lg shadow-red-500/10">
+            ⚠ {t.message}
+          </div>
+        ))}
+      </div>
+
     </div>
   )
 }
