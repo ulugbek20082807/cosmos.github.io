@@ -12,6 +12,47 @@ export function raDecToVector(raDeg, decDeg, distance) {
   )
 }
 
+const nebulaVertexShader = `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`
+
+const nebulaFragmentShader = `
+  varying vec2 vUv;
+  
+  float rand(vec2 n) { 
+      return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
+  }
+  
+  float noise(vec2 p){
+      vec2 ip = floor(p);
+      vec2 u = fract(p);
+      u = u*u*(3.0-2.0*u);
+      
+      float res = mix(
+          mix(rand(ip),rand(ip+vec2(1.0,0.0)),u.x),
+          mix(rand(ip+vec2(0.0,1.0)),rand(ip+vec2(1.0,1.0)),u.x),u.y);
+      return res*res;
+  }
+
+  void main() {
+    vec2 p = vUv * 4.0;
+    float n = noise(p) * 0.5 + noise(p * 2.0) * 0.25 + noise(p * 4.0) * 0.125;
+    
+    vec3 color1 = vec3(0.01, 0.02, 0.05); // Void black-blue
+    vec3 color2 = vec3(0.05, 0.0, 0.15);  // Deep violet
+    vec3 color3 = vec3(0.0, 0.1, 0.2);    // Cyan tint
+    
+    vec3 finalColor = mix(color1, color2, n * 1.5);
+    finalColor = mix(finalColor, color3, smoothstep(0.6, 1.0, n));
+    
+    gl_FragColor = vec4(finalColor * 0.25, 1.0);
+  }
+`
+
 export function Starfield() {
   const ref = useRef()
   const positions = useMemo(() => {
@@ -33,12 +74,23 @@ export function Starfield() {
   })
 
   return (
-    <points ref={ref}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-      </bufferGeometry>
-      <pointsMaterial size={1.2} color="#8899bb" transparent opacity={0.85} sizeAttenuation />
-    </points>
+    <group>
+      <mesh>
+        <sphereGeometry args={[180000, 32, 32]} />
+        <shaderMaterial
+          vertexShader={nebulaVertexShader}
+          fragmentShader={nebulaFragmentShader}
+          side={THREE.BackSide}
+          depthWrite={false}
+        />
+      </mesh>
+      <points ref={ref}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        </bufferGeometry>
+        <pointsMaterial size={1.2} color="#8899bb" transparent opacity={0.85} sizeAttenuation />
+      </points>
+    </group>
   )
 }
 

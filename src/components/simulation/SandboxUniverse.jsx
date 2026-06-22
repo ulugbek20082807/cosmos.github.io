@@ -54,7 +54,7 @@ function TexturedBody({ body, radius, bodiesRef, onSelect }) {
           onPointerEnter={onPointerOver}
           onPointerLeave={onPointerOut}
         >
-          <sphereGeometry args={[Math.max(radius, 0.001), 64, 64]} />
+          <sphereGeometry args={[Math.max(radius, 0.001), 32, 32]} />
           {body.type === 'black_hole' || body.mass > 1e31 ? (
             <meshBasicMaterial color="black" />
           ) : isEmissive ? (
@@ -66,7 +66,7 @@ function TexturedBody({ body, radius, bodiesRef, onSelect }) {
       </Trail>
       {isEmissive && (
         <mesh>
-          <sphereGeometry args={[Math.max(radius * 4.0, 0.003), 64, 64]} />
+          <sphereGeometry args={[Math.max(radius * 4.0, 0.003), 32, 32]} />
           <StarGlowMaterial color={body.color || '#ffffff'} opacity={0.5} />
         </mesh>
       )}
@@ -111,7 +111,7 @@ function ColoredBody({ body, radius, bodiesRef, onSelect }) {
           onPointerEnter={onPointerOver}
           onPointerLeave={onPointerOut}
         >
-          <sphereGeometry args={[Math.max(radius, 0.001), 64, 64]} />
+          <sphereGeometry args={[Math.max(radius, 0.001), 32, 32]} />
           {isEmissive ? (
             <meshStandardMaterial color={glowColor} emissive={glowColor} emissiveIntensity={2} />
           ) : (
@@ -121,7 +121,7 @@ function ColoredBody({ body, radius, bodiesRef, onSelect }) {
       </Trail>
       {isEmissive && (
         <mesh>
-          <sphereGeometry args={[Math.max(radius * 4.0, 0.003), 64, 64]} />
+          <sphereGeometry args={[Math.max(radius * 4.0, 0.003), 32, 32]} />
           <StarGlowMaterial color={glowColor} opacity={0.5} />
         </mesh>
       )}
@@ -160,7 +160,7 @@ export function SandboxUniverse({ bodiesRef, onSelectBody, selectedId, showGrid 
   return (
     <group>
       <EffectComposer disableNormalPass>
-        <Bloom luminanceThreshold={1.1} luminanceSmoothing={0.9} height={300} opacity={1.5} mipmapBlur />
+        <Bloom luminanceThreshold={1.1} luminanceSmoothing={0.9} height={300} opacity={1.5} mipmapBlur resolutionX={256} resolutionY={256} />
         <Vignette eskil={false} offset={0.1} darkness={0.9} />
       </EffectComposer>
       <ambientLight intensity={0.15} />

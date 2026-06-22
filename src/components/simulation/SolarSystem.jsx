@@ -65,12 +65,12 @@ function EarthShader({ planetId, orbitKm, planetStatesRef, simActive, simTimeRef
           onPointerEnter={(e) => { e.stopPropagation(); onEarthOver() }}
           onPointerLeave={(e) => { e.stopPropagation(); onEarthOut() }}
         >
-          <sphereGeometry args={[r, 48, 32]} />
+          <sphereGeometry args={[r, 32, 32]} />
           <meshPhongMaterial map={dayTex} color="#ffffff" shininess={15} />
         </mesh>
         {/* Procedural atmosphere glow */}
         <mesh>
-          <sphereGeometry args={[r * 1.05, 48, 32]} />
+          <sphereGeometry args={[r * 1.05, 32, 32]} />
           <meshBasicMaterial color="#4488ff" transparent opacity={0.07} side={THREE.BackSide} depthWrite={false} blending={THREE.AdditiveBlending} />
         </mesh>
         {/* Moon */}
@@ -138,7 +138,7 @@ function PlanetMesh({ planet, planetStatesRef, simActive, simTimeRef, onSelect, 
           onPointerEnter={onPointerOver}
           onPointerLeave={onPointerOut}
         >
-          <sphereGeometry args={[radius, 48, 32]} />
+          <sphereGeometry args={[radius, 32, 32]} />
           <meshPhongMaterial map={texture} color="#ffffff" shininess={8} />
         </mesh>
         
@@ -224,7 +224,7 @@ function Sun({ onSelect, simActive, timeScale = 1 }) {
     <group name="sun">
       {/* Smooth, dithered solar corona glow */}
       <mesh ref={coronaRef}>
-        <sphereGeometry args={[radius * 4.0, 64, 48]} />
+        <sphereGeometry args={[radius * 4.0, 32, 32]} />
         <StarGlowMaterial color="#ffa030" opacity={0.6} />
       </mesh>
       <mesh
@@ -233,7 +233,7 @@ function Sun({ onSelect, simActive, timeScale = 1 }) {
         onPointerEnter={onPointerOver}
         onPointerLeave={onPointerOut}
       >
-        <sphereGeometry args={[radius, 64, 48]} />
+        <sphereGeometry args={[radius, 32, 32]} />
         <meshStandardMaterial map={sunTex} emissiveMap={sunTex} emissive={sunTex ? "#ffffff" : "#fff2a3"} emissiveIntensity={2} color="#ffffff" />
       </mesh>
       <pointLight color="#ffd37a" intensity={4.5} distance={3500} decay={1.2} />
@@ -254,7 +254,7 @@ export function SolarSystem({ planets, planetStatesRef, onSelectPlanet, simActiv
   return (
     <group>
       <EffectComposer disableNormalPass>
-        <Bloom luminanceThreshold={1.1} luminanceSmoothing={0.9} height={300} opacity={1.5} mipmapBlur />
+        <Bloom luminanceThreshold={1.1} luminanceSmoothing={0.9} height={300} opacity={1.5} mipmapBlur resolutionX={256} resolutionY={256} />
         <Vignette eskil={false} offset={0.1} darkness={0.9} />
       </EffectComposer>
       <Sun onSelect={onSelectPlanet} simActive={simActive} timeScale={timeScale} />

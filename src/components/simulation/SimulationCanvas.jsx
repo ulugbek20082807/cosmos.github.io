@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react'
 import { Canvas, useThree, useFrame } from '@react-three/fiber'
-import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
+import { OrbitControls, PerspectiveCamera, PerformanceMonitor, AdaptiveDpr } from '@react-three/drei'
 import * as THREE from 'three'
 
 function ContinuousTracker({ trackedTargetRef, trackedObjectId, controlsRef, isFocusAnimating }) {
@@ -217,6 +217,9 @@ export function SimulationCanvas({
           onViewScaleChange={onViewScaleChange}
           isFocusAnimating={isFocusAnimating}
         />
+        <PerformanceMonitor>
+          <AdaptiveDpr pixelated={false} />
+        </PerformanceMonitor>
         {children}
       </Canvas>
     </div>

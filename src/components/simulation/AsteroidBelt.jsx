@@ -60,37 +60,53 @@ function AsteroidBelt({ innerKm = ASTEROID_BELT_INNER_KM, outerKm = ASTEROID_BEL
         </bufferGeometry>
         <pointsMaterial size={0.12} vertexColors transparent opacity={0.7} sizeAttenuation depthWrite={false} />
       </points>
-      {asteroids.map((a, i) => (
-        <AsteroidRock key={i} data={a} simActive={simActive} />
-      ))}
+      <InstancedAsteroids asteroids={asteroids} simActive={simActive} />
     </group>
   )
 }
 
-function AsteroidRock({ data, simActive }) {
-  const ref = useRef()
-  const angleRef = useRef(data.angle)
+function InstancedAsteroids({ asteroids, simActive }) {
+  const meshRef = useRef()
   const asteroidTex = useSafeTexture(REMOTE_TEXTURES.asteroid)
+  const dummy = useMemo(() => new THREE.Object3D(), [])
+  
+  // Store dynamic state in a ref so we don't trigger re-renders
+  const stateRef = useRef(asteroids.map(a => ({
+    angle: a.angle,
+    rotX: 0,
+    rotY: 0
+  })))
 
   useFrame((_, delta) => {
-    if (!ref.current) return
-    ref.current.rotation.x += delta * data.rotSpeed
-    ref.current.rotation.y += delta * data.rotSpeed * 0.7
-    if (simActive) {
-      angleRef.current += delta * data.orbitSpeed
-      ref.current.position.set(
-        Math.cos(angleRef.current) * data.radius,
+    if (!meshRef.current) return
+    
+    asteroids.forEach((data, i) => {
+      const state = stateRef.current[i]
+      state.rotX += delta * data.rotSpeed
+      state.rotY += delta * data.rotSpeed * 0.7
+      
+      if (simActive) {
+        state.angle += delta * data.orbitSpeed
+      }
+      
+      dummy.position.set(
+        Math.cos(state.angle) * data.radius,
         data.position[1],
-        Math.sin(angleRef.current) * data.radius,
+        Math.sin(state.angle) * data.radius
       )
-    }
+      dummy.rotation.set(state.rotX, state.rotY, 0)
+      dummy.scale.setScalar(data.scale)
+      dummy.updateMatrix()
+      meshRef.current.setMatrixAt(i, dummy.matrix)
+    })
+    meshRef.current.instanceMatrix.needsUpdate = true
   })
 
   return (
-    <mesh ref={ref} position={data.position} scale={data.scale}>
+    <instancedMesh ref={meshRef} args={[null, null, asteroids.length]}>
       <dodecahedronGeometry args={[1, 0]} />
       <meshStandardMaterial map={asteroidTex} color="#8a7a6a" roughness={0.95} metalness={0.03} />
-    </mesh>
+    </instancedMesh>
   )
 }
 
