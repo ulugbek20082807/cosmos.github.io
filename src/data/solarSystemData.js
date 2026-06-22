@@ -79,8 +79,8 @@ export const PLANETS = [
     orbitPeriodDays: 687,
     texture: TEXTURES.mars,
     moons: [
-      { name: 'Phobos', radiusKm: 11.1, orbitKm: 9_376, texture: TEXTURES.moon, orbitPeriodDays: 0.32 },
-      { name: 'Deimos', radiusKm: 6.2, orbitKm: 23_463, texture: TEXTURES.moon, orbitPeriodDays: 1.26 },
+      { name: 'Phobos', radiusKm: 11.1, orbitKm: 9_376, texture: TEXTURES.moon, orbitPeriodDays: 0.32, e: 0.0151, i: 1.093, lan: 35.0, w: 150.0 },
+      { name: 'Deimos', radiusKm: 6.2, orbitKm: 23_463, texture: TEXTURES.moon, orbitPeriodDays: 1.26, e: 0.0002, i: 1.793, lan: 115.0, w: 240.0 },
     ],
     gravityG: 0.38,
     info: 'The Red Planet; target for human exploration.',
@@ -173,7 +173,7 @@ export const PLANETS = [
     orbitPeriodDays: 90560,
     texture: TEXTURES.pluto,
     moons: [
-      { name: 'Charon', radiusKm: 606, orbitKm: 19_640, texture: TEXTURES.moon, orbitPeriodDays: 6.39 },
+      { name: 'Charon', radiusKm: 606, orbitKm: 19_640, texture: TEXTURES.moon, orbitPeriodDays: 6.39, e: 0.0022, i: 0.08, lan: 80.0, w: 10.0 },
     ],
     info: 'Dwarf planet in the Kuiper belt.',
   },

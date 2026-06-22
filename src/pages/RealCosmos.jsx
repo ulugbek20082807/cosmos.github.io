@@ -65,7 +65,7 @@ function getEntryPosition(entry, planetStates, simTime, bodies = []) {
 export default function RealCosmos() {
   const [viewScale, setViewScale] = useState(1)
   const [playing, setPlaying] = useState(true)
-  const [timeScale, setTimeScale] = useState(86400)
+  const [timeScale, setTimeScale] = useState(60)
   // Physics engine refs (Zero-lag 60fps)
   const simTimeRef = useRef(0)
   const bodiesRef = useRef(INITIAL_BODIES)
@@ -300,6 +300,7 @@ export default function RealCosmos() {
             selectedId={selectedId}
             simActive={simActive}
             simTimeRef={simTimeRef}
+            timeScale={timeScale}
           />
           <CosmicMarkers
             objects={CATALOG_COSMIC}

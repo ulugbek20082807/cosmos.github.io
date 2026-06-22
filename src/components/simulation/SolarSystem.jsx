@@ -19,7 +19,7 @@ import { HoverRing, ObjectLabel } from './ObjectInteraction'
 import { getMoonOrbitFrame } from '../../utils/orbitMath'
 import { useGlobalHover } from '../../hooks/useGlobalHover'
 
-function EarthShader({ planetId, orbitKm, planetStatesRef, simActive, simTimeRef, tilt, moon, onSelect }) {
+function EarthShader({ planetId, orbitKm, planetStatesRef, simActive, simTimeRef, tilt, moon, onSelect, timeScale = 1 }) {
   const groupRef = useRef()
   const meshRef = useRef()
   const moonRef = useRef()
@@ -43,8 +43,8 @@ function EarthShader({ planetId, orbitKm, planetStatesRef, simActive, simTimeRef
       }
     }
     if (meshRef.current && simActive) {
-      meshRef.current.rotation.y += delta * 0.5
-      meshRef.current.rotation.z = (tilt * Math.PI) / 180
+      const rotSpeed = (2 * Math.PI) / (1 * 86400) // 1 day
+      meshRef.current.rotation.y += delta * timeScale * rotSpeed
     }
     if (moonRef.current && moon) {
       const frame = getMoonOrbitFrame(moon, moonOrbit, simTimeRef.current)
@@ -52,53 +52,57 @@ function EarthShader({ planetId, orbitKm, planetStatesRef, simActive, simTimeRef
     }
   })
 
+  const tiltRad = (tilt * Math.PI) / 180
+
   return (
     <group ref={groupRef} name={planetId}>
-      {/* Earth surface */}
-      <mesh
-        ref={meshRef}
-        onClick={(e) => { e.stopPropagation(); onSelect?.({ name: 'Earth', id: 'earth', radiusKm: 6371 }) }}
-        onPointerEnter={(e) => { e.stopPropagation(); onEarthOver() }}
-        onPointerLeave={(e) => { e.stopPropagation(); onEarthOut() }}
-      >
-        <sphereGeometry args={[r, 48, 32]} />
-        <meshPhongMaterial map={dayTex} color="#ffffff" shininess={15} />
-      </mesh>
-      {/* Procedural atmosphere glow */}
-      <mesh>
-        <sphereGeometry args={[r * 1.05, 48, 32]} />
-        <meshBasicMaterial color="#4488ff" transparent opacity={0.07} side={THREE.BackSide} depthWrite={false} blending={THREE.AdditiveBlending} />
-      </mesh>
+      {/* Tilt Group: Tilts the Earth surface, atmosphere, and its moon orbit */}
+      <group rotation={[0, 0, tiltRad]}>
+        <mesh
+          ref={meshRef}
+          onClick={(e) => { e.stopPropagation(); onSelect?.({ name: 'Earth', id: 'earth', radiusKm: 6371 }) }}
+          onPointerEnter={(e) => { e.stopPropagation(); onEarthOver() }}
+          onPointerLeave={(e) => { e.stopPropagation(); onEarthOut() }}
+        >
+          <sphereGeometry args={[r, 48, 32]} />
+          <meshPhongMaterial map={dayTex} color="#ffffff" shininess={15} />
+        </mesh>
+        {/* Procedural atmosphere glow */}
+        <mesh>
+          <sphereGeometry args={[r * 1.05, 48, 32]} />
+          <meshBasicMaterial color="#4488ff" transparent opacity={0.07} side={THREE.BackSide} depthWrite={false} blending={THREE.AdditiveBlending} />
+        </mesh>
+        {/* Moon */}
+        {moon && (
+          <group>
+            <OrbitPath radius={moonOrbit} color="#93c5fd" opacity={0.14} e={moon.e||0} i={moon.i||0} lan={moon.lan||0} w={moon.w||0} />
+            <group ref={moonRef} name={moon.name.toLowerCase()}>
+              <mesh
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const wp = new THREE.Vector3()
+                  moonRef.current.getWorldPosition(wp)
+                  onSelect?.({ ...moon, id: 'moon', type: 'moon', parentPlanet: 'Earth', position: wp.toArray() })
+                }}
+                onPointerOver={(e) => { e.stopPropagation(); onMoonOver() }}
+                onPointerOut={(e) => { e.stopPropagation(); onMoonOut() }}
+              >
+                <sphereGeometry args={[moonR, 32, 24]} />
+                <meshStandardMaterial map={moonTex} color="#ffffff" roughness={0.95} />
+              </mesh>
+              <HoverRing radius={moonR} visible={moonHovered} />
+              <ObjectLabel name="Moon" radius={moonR} visible={moonHovered} />
+            </group>
+          </group>
+        )}
+      </group>
       <HoverRing radius={r} visible={earthHovered} />
       <ObjectLabel name="Earth" radius={r} visible={earthHovered} />
-      {/* Moon */}
-      {moon && (
-        <group>
-          <OrbitPath radius={moonOrbit} color="#93c5fd" opacity={0.14} e={moon.e||0} i={moon.i||0} lan={moon.lan||0} w={moon.w||0} />
-          <group ref={moonRef} name={moon.name.toLowerCase()}>
-            <mesh
-              onClick={(e) => {
-                e.stopPropagation()
-                const wp = new THREE.Vector3()
-                moonRef.current.getWorldPosition(wp)
-                onSelect?.({ ...moon, id: 'moon', type: 'moon', parentPlanet: 'Earth', position: wp.toArray() })
-              }}
-              onPointerOver={(e) => { e.stopPropagation(); onMoonOver() }}
-              onPointerOut={(e) => { e.stopPropagation(); onMoonOut() }}
-            >
-              <sphereGeometry args={[moonR, 32, 24]} />
-              <meshStandardMaterial map={moonTex} color="#ffffff" roughness={0.95} />
-            </mesh>
-            <HoverRing radius={moonR} visible={moonHovered} />
-            <ObjectLabel name="Moon" radius={moonR} visible={moonHovered} />
-          </group>
-        </group>
-      )}
     </group>
   )
 }
 
-function PlanetMesh({ planet, planetStatesRef, simActive, simTimeRef, onSelect }) {
+function PlanetMesh({ planet, planetStatesRef, simActive, simTimeRef, onSelect, timeScale = 1 }) {
   const groupRef = useRef()
   const meshRef = useRef()
   const { hovered, onPointerOver, onPointerOut } = useGlobalHover(planet.id)
@@ -117,29 +121,33 @@ function PlanetMesh({ planet, planetStatesRef, simActive, simTimeRef, onSelect }
     }
     if (meshRef.current && simActive) {
       const rotSpeed = (2 * Math.PI) / (planet.rotationPeriodDays * 86400)
-      meshRef.current.rotation.y += delta * rotSpeed * 86400
-      meshRef.current.rotation.z = (planet.tilt * Math.PI) / 180
+      meshRef.current.rotation.y += delta * timeScale * rotSpeed
     }
   })
 
+  const tiltRad = (planet.tilt * Math.PI) / 180
+
   return (
     <group ref={groupRef} name={planet.id}>
-      <mesh
-        ref={meshRef}
-        onClick={(e) => { e.stopPropagation(); onSelect?.(planet) }}
-        onPointerEnter={onPointerOver}
-        onPointerLeave={onPointerOut}
-      >
-        <sphereGeometry args={[radius, 48, 32]} />
-        <meshPhongMaterial map={texture} color="#ffffff" shininess={8} />
-      </mesh>
+      {/* Tilt Group: Tilts everything (planet, rings, moons) by planet's axial tilt */}
+      <group rotation={[0, 0, tiltRad]}>
+        <mesh
+          ref={meshRef}
+          onClick={(e) => { e.stopPropagation(); onSelect?.(planet) }}
+          onPointerEnter={onPointerOver}
+          onPointerLeave={onPointerOut}
+        >
+          <sphereGeometry args={[radius, 48, 32]} />
+          <meshPhongMaterial map={texture} color="#ffffff" shininess={8} />
+        </mesh>
+        
+        {planet.ring && <RingBody planet={planet} radius={radius} />}
+        {planet.moons?.map((moon) => (
+          <MoonBody key={moon.name} moon={moon} parentPlanet={planet.name} parentRadius={radius} simActive={simActive} simTimeRef={simTimeRef} onSelect={onSelect} />
+        ))}
+      </group>
       <HoverRing radius={radius} visible={hovered} />
       <ObjectLabel name={planet.name} radius={radius} visible={hovered} />
-      
-      {planet.ring && <RingBody planet={planet} radius={radius} />}
-      {planet.moons?.map((moon) => (
-        <MoonBody key={moon.name} moon={moon} parentPlanet={planet.name} parentRadius={radius} simActive={simActive} simTimeRef={simTimeRef} onSelect={onSelect} />
-      ))}
     </group>
   )
 }
@@ -149,7 +157,7 @@ function RingBody({ planet, radius }) {
   const { inner, outer } = ringDisplayRadii(planet.ring, radius)
 
   return (
-    <mesh rotation={[-Math.PI / 2, 0, (planet.tilt * Math.PI) / 180]}>
+    <mesh rotation={[-Math.PI / 2, 0, 0]}>
       <ringGeometry args={[inner, outer, 128]} />
       <meshStandardMaterial map={ringTex} side={THREE.DoubleSide} transparent opacity={0.85} color="#ffffff" roughness={0.9} />
     </mesh>
@@ -193,16 +201,17 @@ function MoonBody({ moon, parentPlanet, parentRadius, simActive, simTimeRef, onS
   )
 }
 
-function Sun({ onSelect, simActive }) {
+function Sun({ onSelect, simActive, timeScale = 1 }) {
   const ref = useRef()
   const coronaRef = useRef()
   const { hovered, onPointerOver, onPointerOut } = useGlobalHover('sun')
   const sunTex = useSafeTexture(TEXTURES.sun)
   const radius = planetDisplayRadius(SUN.radiusKm) * 1.5
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock }, delta) => {
     if (simActive && ref.current) {
-      ref.current.rotation.y += 0.001
+      const rotSpeed = (2 * Math.PI) / (25.05 * 86400)
+      ref.current.rotation.y += delta * timeScale * rotSpeed
     }
     if (coronaRef.current) {
       const pulse = 1 + 0.04 * Math.sin(clock.elapsedTime * 1.5)
@@ -236,12 +245,17 @@ function Sun({ onSelect, simActive }) {
   )
 }
 
-export function SolarSystem({ planets, planetStatesRef, onSelectPlanet, simActive = true, simTimeRef }) {
+// Fade orbit path opacity for very distant orbits so they don't appear as intrusive lines when zoomed in
+function orbitOpacity(radiusUnits) {
+  return Math.max(0.015, 0.1 / (1 + radiusUnits / 500))
+}
+
+export function SolarSystem({ planets, planetStatesRef, onSelectPlanet, simActive = true, simTimeRef, timeScale = 1 }) {
   const asteroidBeltAfterIndex = planets.findIndex((planet) => planet.id === 'mars')
 
   return (
     <group>
-      <Sun onSelect={onSelectPlanet} simActive={simActive} />
+      <Sun onSelect={onSelectPlanet} simActive={simActive} timeScale={timeScale} />
       <pointLight color="#fff8e0" intensity={3} distance={100000} decay={0} />
       <ambientLight intensity={0.08} />
       {planets.map((planet, planetIndex) => {
@@ -250,7 +264,7 @@ export function SolarSystem({ planets, planetStatesRef, onSelectPlanet, simActiv
         if (planet.shader === 'earth') {
           return (
             <group key={planet.id}>
-              <OrbitPath radius={orbitR} />
+              <OrbitPath radius={orbitR} opacity={orbitOpacity(orbitR)} />
               <EarthShader
                 planetId={planet.id}
                 orbitKm={planet.orbitKm}
@@ -260,6 +274,7 @@ export function SolarSystem({ planets, planetStatesRef, onSelectPlanet, simActiv
                 tilt={planet.tilt}
                 moon={planet.moons?.[0]}
                 onSelect={onSelectPlanet}
+                timeScale={timeScale}
               />
             </group>
           )
@@ -269,13 +284,14 @@ export function SolarSystem({ planets, planetStatesRef, onSelectPlanet, simActiv
 
         return (
           <group key={planet.id}>
-            <OrbitPath radius={orbitR} e={planet.e||0} i={planet.i||0} lan={planet.lan||0} w={planet.w||0} />
+            <OrbitPath radius={orbitR} opacity={orbitOpacity(orbitR)} e={planet.e||0} i={planet.i||0} lan={planet.lan||0} w={planet.w||0} />
             <PlanetMesh
               planet={planet}
               planetStatesRef={planetStatesRef}
               simActive={simActive}
               simTimeRef={simTimeRef}
               onSelect={onSelectPlanet}
+              timeScale={timeScale}
             />
             {showBelt && <AsteroidBelt innerKm={ASTEROID_BELT_INNER_KM} outerKm={ASTEROID_BELT_OUTER_KM} simActive={simActive} />}
           </group>

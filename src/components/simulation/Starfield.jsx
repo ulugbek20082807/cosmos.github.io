@@ -52,13 +52,17 @@ export function OrbitPath({ radius, color = '#ffffff', opacity = 0.08, e = 0, i 
       false, 0
     )
     
+    const iRad = (i || 0) * Math.PI / 180
+    const lanRad = (lan || 0) * Math.PI / 180
+    const wRad = (w || 0) * Math.PI / 180
+
     // Convert to 3D and apply orbital rotations
     const pts = curve.getPoints(128).map((p) => {
       const vec = new THREE.Vector3(p.x, 0, -p.y)
       // Same exact rotations as getMoonOrbitFrame
-      vec.applyAxisAngle(new THREE.Vector3(0, 1, 0), -w)
-      vec.applyAxisAngle(new THREE.Vector3(1, 0, 0), i)
-      vec.applyAxisAngle(new THREE.Vector3(0, 1, 0), -lan)
+      vec.applyAxisAngle(new THREE.Vector3(0, 1, 0), -wRad)
+      vec.applyAxisAngle(new THREE.Vector3(1, 0, 0), iRad)
+      vec.applyAxisAngle(new THREE.Vector3(0, 1, 0), -lanRad)
       return vec
     })
     return pts
