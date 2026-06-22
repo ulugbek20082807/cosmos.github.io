@@ -5,6 +5,7 @@ import { raDecToVector } from './Starfield'
 import { TEXTURES } from '../../data/solarSystemData'
 import { useSafeTexture, REMOTE_TEXTURES } from '../../utils/textures'
 import { HoverRing, ObjectLabel } from './ObjectInteraction'
+import { StarGlowMaterial } from './StarGlowMaterial'
 
 const DISPLAY_BASE = 2000
 const DISPLAY_FACTOR = 5000
@@ -55,17 +56,10 @@ function StarMesh({ size, color }) {
           color="#ffffff"
         />
       </mesh>
-      {/* Star glow (this provides the colored tint based on star temperature) */}
+      {/* Smooth dithered star glow */}
       <mesh>
-        <sphereGeometry args={[size * 1.6, 24, 16]} />
-        <meshBasicMaterial
-          color={color || '#fff4a8'}
-          transparent
-          opacity={0.08}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-          side={THREE.BackSide}
-        />
+        <sphereGeometry args={[size * 4.0, 32, 24]} />
+        <StarGlowMaterial color={color || '#fff4a8'} opacity={0.6} />
       </mesh>
     </group>
   )

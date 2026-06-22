@@ -18,6 +18,7 @@ import { useSafeTexture } from '../../utils/textures'
 import { HoverRing, ObjectLabel } from './ObjectInteraction'
 import { getMoonOrbitFrame } from '../../utils/orbitMath'
 import { useGlobalHover } from '../../hooks/useGlobalHover'
+import { StarGlowMaterial } from './StarGlowMaterial'
 
 function EarthShader({ planetId, orbitKm, planetStatesRef, simActive, simTimeRef, tilt, moon, onSelect, timeScale = 1 }) {
   const groupRef = useRef()
@@ -221,13 +222,10 @@ function Sun({ onSelect, simActive, timeScale = 1 }) {
 
   return (
     <group name="sun">
+      {/* Smooth, dithered solar corona glow */}
       <mesh ref={coronaRef}>
-        <sphereGeometry args={[radius * 1.25, 64, 48]} />
-        <meshBasicMaterial color="#ffa030" transparent opacity={0.08} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.BackSide} />
-      </mesh>
-      <mesh>
-        <sphereGeometry args={[radius * 1.12, 64, 48]} />
-        <meshBasicMaterial color="#facc15" transparent opacity={0.18} blending={THREE.AdditiveBlending} depthWrite={false} />
+        <sphereGeometry args={[radius * 4.0, 64, 48]} />
+        <StarGlowMaterial color="#ffa030" opacity={0.6} />
       </mesh>
       <mesh
         ref={ref}

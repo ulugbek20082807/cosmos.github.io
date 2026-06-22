@@ -5,6 +5,7 @@ const METERS_PER_UNIT = 1e9
 export { METERS_PER_UNIT }
 
 import { getMoonOrbitFrame } from '../utils/orbitMath'
+import { planetDisplayRadius, SUN } from '../data/solarSystemData'
 
 export function gravitationalForce(m1, m2, dx, dy, dz) {
   const r2 = dx * dx + dy * dy + dz * dz
@@ -91,6 +92,20 @@ function pointToSegmentDistance(cx, cy, cz, p1x, p1y, p1z, p2x, p2y, p2z) {
   return Math.sqrt(dx * dx + dy * dy + dz * dz)
 }
 
+export function getCollisionRadius(body) {
+  // If it's the real Sun in RealCosmos
+  if (body.isSystem && body.id === 'sun-gravity') {
+    return planetDisplayRadius(SUN.radiusKm) * 1.5
+  }
+  // If it's a planet in RealCosmos
+  if (body.isPlanet) {
+    return planetDisplayRadius(body.radiusKm || 6371)
+  }
+  // Otherwise it's a custom/spawned body
+  const radius = body.radiusKm ? planetDisplayRadius(body.radiusKm) : (body.radius ? body.radius / 1e6 : 0.001)
+  return Math.max(radius, 0.08)
+}
+
 export function stepNBody(bodies, dt, timeScale) {
   const scaledDt = dt * timeScale
   if (scaledDt === 0 || bodies.length === 0) return bodies
@@ -112,31 +127,33 @@ export function stepNBody(bodies, dt, timeScale) {
       let isDestroyed = false
       
       if (!b1.isSystem && !b1.isPlanet) {
-        let r1 = b1.radiusKm ? (Math.log10(b1.radiusKm / 6371 + 1) * 0.15 + 0.05) : 0.05
+        const r1 = getCollisionRadius(b1)
         for (let j = 0; j < current.length; j++) {
           if (i === j) continue
           const b2 = current[j]
-          let r2 = b2.radiusKm ? (Math.log10(b2.radiusKm / 6371 + 1) * 0.15 + 0.05) : 0.05
-          if (b2.isSystem && b2.id === 'sun-gravity') r2 = (Math.log10(696340 / 6371 + 1) * 0.15 + 0.05)
-
-
-          const oldPos = b1.oldPosition || b1.position
-          const cx = b2.position[0]
-          const cy = b2.position[1]
-          const cz = b2.position[2]
           
-          // Continuous collision check (line segment to sphere)
-          const dist = pointToSegmentDistance(
-            cx, cy, cz, 
-            oldPos[0], oldPos[1], oldPos[2],
-            b1.position[0], b1.position[1], b1.position[2]
-          )
-          
-          if (dist < r1 + r2) {
-            isDestroyed = true
-            b1.destroyedBy = b2.name
-            destroyed.push(b1)
-            break
+          // Only destroy b1 if b2 is a system body (sun/planet), or if they are both custom and b2 is heavier/equal
+          const b2IsSystemOrPlanet = b2.isSystem || b2.isPlanet
+          if (b2IsSystemOrPlanet || (b2.mass || 0) >= (b1.mass || 0)) {
+            const r2 = getCollisionRadius(b2)
+            const oldPos = b1.oldPosition || b1.position
+            const cx = b2.position[0]
+            const cy = b2.position[1]
+            const cz = b2.position[2]
+            
+            // Continuous collision check (line segment to sphere)
+            const dist = pointToSegmentDistance(
+              cx, cy, cz, 
+              oldPos[0], oldPos[1], oldPos[2],
+              b1.position[0], b1.position[1], b1.position[2]
+            )
+            
+            if (dist < r1 + r2) {
+              isDestroyed = true
+              b1.destroyedBy = b2.name
+              destroyed.push(b1)
+              break
+            }
           }
         }
       }
