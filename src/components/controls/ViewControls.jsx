@@ -129,6 +129,44 @@ export function TimeControl({
   )
 }
 
+function UplinkOverlay() {
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    let current = 0
+    const interval = setInterval(() => {
+      current += Math.floor(Math.random() * 18) + 4
+      if (current > 99) current = 99
+      setProgress(current)
+    }, 80)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div className="absolute top-full left-0 mt-4 flex items-end z-50 pointer-events-none drop-shadow-[0_0_10px_rgba(34,211,238,0.3)]">
+      {/* Sci-fi radar box */}
+      <div className="relative w-16 h-10 border border-slate-600/60 rounded-md flex items-center justify-center bg-black/40 backdrop-blur-sm -mb-1">
+        {/* Scanning dot */}
+        <div className="w-1.5 h-1.5 bg-cosmic-cyan" style={{ animation: 'scan-dot 1.2s ease-in-out infinite alternate' }} />
+        
+        {/* Inline style for the custom animation since Tailwind JIT might not catch custom keyframes without a plugin */}
+        <style>{`
+          @keyframes scan-dot {
+            0% { transform: translateX(-12px); opacity: 0.3; }
+            50% { opacity: 1; box-shadow: 0 0 8px #22d3ee; }
+            100% { transform: translateX(12px); opacity: 0.3; }
+          }
+        `}</style>
+      </div>
+      
+      {/* Text label */}
+      <div className="text-slate-200 font-display text-[11px] tracking-[0.25em] uppercase whitespace-nowrap ml-3">
+        Establishing Uplink... {progress}%
+      </div>
+    </div>
+  )
+}
+
 export function SearchControl({ onSearch, highlightName }) {
   const [query, setQuery] = useState('')
   const [notFound, setNotFound] = useState(false)
@@ -144,9 +182,9 @@ export function SearchControl({ onSearch, highlightName }) {
   }
 
   return (
-    <form onSubmit={handleSearch} className="space-y-1">
+    <form onSubmit={handleSearch} className="space-y-1 relative">
       <label className="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-mono">
-        {isFetching ? '📡 Establishing Uplink...' : 'Object Search'}
+        Object Search
       </label>
       <div className="flex gap-1 min-w-0">
         <input
@@ -162,9 +200,13 @@ export function SearchControl({ onSearch, highlightName }) {
           disabled={isFetching}
           className="px-2 h-8 glass-panel text-[10px] font-mono uppercase tracking-wider hover:border-cosmic-accent whitespace-nowrap disabled:opacity-50"
         >
-          {isFetching ? '...' : 'Go'}
+          Go
         </button>
       </div>
+
+      {/* Premium Cinematic Loading Overlay */}
+      {isFetching && <UplinkOverlay />}
+
       {highlightName && !isFetching && (
         <p className="text-[9px] text-cosmic-cyan font-mono">Tracking: {highlightName}</p>
       )}

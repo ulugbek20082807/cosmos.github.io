@@ -824,7 +824,8 @@ function ExoplanetVisual({ size, color }) {
 }
 
 function WikiObjectVisual({ size, textureUrl }) {
-  const ref = useRef()
+  const groupRef = useRef()
+  const matRef = useRef()
   const [tex, setTex] = useState(null)
 
   useEffect(() => {
@@ -839,27 +840,44 @@ function WikiObjectVisual({ size, textureUrl }) {
   }, [textureUrl])
 
   useFrame((_, delta) => {
-    if (ref.current) ref.current.rotation.y += delta * 0.2
+    if (groupRef.current) groupRef.current.rotation.y += delta * 0.2
+    // Smooth cinematic crossfade when texture finishes loading
+    if (matRef.current && tex) {
+      matRef.current.opacity = THREE.MathUtils.lerp(matRef.current.opacity, 1, delta * 3)
+    }
   })
 
   return (
-    <group>
-      {/* Main body */}
-      <mesh ref={ref}>
+    <group ref={groupRef}>
+      {/* Holographic loading skeleton */}
+      {!tex && (
+        <mesh>
+          <sphereGeometry args={[size * 0.8, 16, 12]} />
+          <meshBasicMaterial color="#22d3ee" wireframe transparent opacity={0.4} />
+        </mesh>
+      )}
+
+      {/* Main textured body (cinematically fades in) */}
+      <mesh>
         <sphereGeometry args={[size * 0.8, 32, 24]} />
         <meshStandardMaterial 
+          ref={matRef}
           map={tex} 
-          color={tex ? '#ffffff' : '#4ade80'} 
+          color="#ffffff" 
           roughness={0.6}
+          transparent
+          opacity={0} // Starts completely invisible
+          depthWrite={!!tex}
         />
       </mesh>
+      
       {/* Outer atmosphere / glow */}
       <mesh>
         <sphereGeometry args={[size * 0.9, 32, 24]} />
         <meshBasicMaterial
-          color="#4ade80"
+          color="#22d3ee"
           transparent
-          opacity={0.15}
+          opacity={tex ? 0.15 : 0.05}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
           side={THREE.BackSide}
