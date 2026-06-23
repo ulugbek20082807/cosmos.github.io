@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo } from 'react'
+import { useRef, useState, useMemo, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { raDecToVector } from './Starfield'
@@ -22,6 +22,7 @@ export function getCosmicVisualRadius(obj) {
   if (obj.type === 'black_hole') return 500
   if (obj.type === 'exoplanet') return 50
   if (obj.type === 'star') return 120
+  if (obj.type === 'wiki_object') return 200
   return 50
 }
 
@@ -822,6 +823,52 @@ function ExoplanetVisual({ size, color }) {
   )
 }
 
+function WikiObjectVisual({ size, textureUrl }) {
+  const ref = useRef()
+  const [tex, setTex] = useState(null)
+
+  useEffect(() => {
+    if (textureUrl) {
+      const loader = new THREE.TextureLoader()
+      loader.setCrossOrigin('anonymous')
+      loader.load(textureUrl, (loadedTex) => {
+        loadedTex.colorSpace = THREE.SRGBColorSpace
+        setTex(loadedTex)
+      })
+    }
+  }, [textureUrl])
+
+  useFrame((_, delta) => {
+    if (ref.current) ref.current.rotation.y += delta * 0.2
+  })
+
+  return (
+    <group>
+      {/* Main body */}
+      <mesh ref={ref}>
+        <sphereGeometry args={[size * 0.8, 32, 24]} />
+        <meshStandardMaterial 
+          map={tex} 
+          color={tex ? '#ffffff' : '#4ade80'} 
+          roughness={0.6}
+        />
+      </mesh>
+      {/* Outer atmosphere / glow */}
+      <mesh>
+        <sphereGeometry args={[size * 0.9, 32, 24]} />
+        <meshBasicMaterial
+          color="#4ade80"
+          transparent
+          opacity={0.15}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+          side={THREE.BackSide}
+        />
+      </mesh>
+    </group>
+  )
+}
+
 function CosmicDot({ obj, onSelect }) {
   const groupRef = useRef()
   const [hovered, setHovered] = useState(false)
@@ -847,6 +894,9 @@ function CosmicDot({ obj, onSelect }) {
     }
     if (obj.type === 'star') {
       return <StarMesh size={baseSize * 0.6} color={obj.color} />
+    }
+    if (obj.type === 'wiki_object') {
+      return <WikiObjectVisual size={baseSize} textureUrl={obj.textureUrl} />
     }
     return <StarMesh size={baseSize * 0.5} color={obj.color || '#60a5fa'} />
   }

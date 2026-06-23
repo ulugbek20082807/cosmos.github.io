@@ -132,32 +132,40 @@ export function TimeControl({
 export function SearchControl({ onSearch, highlightName }) {
   const [query, setQuery] = useState('')
   const [notFound, setNotFound] = useState(false)
+  const [isFetching, setIsFetching] = useState(false)
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault()
-    const found = onSearch(query)
+    setIsFetching(true)
+    setNotFound(false)
+    const found = await onSearch(query)
+    setIsFetching(false)
     setNotFound(!found)
   }
 
   return (
     <form onSubmit={handleSearch} className="space-y-1">
-      <label className="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-mono">Object Search</label>
+      <label className="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-mono">
+        {isFetching ? '📡 Establishing Uplink...' : 'Object Search'}
+      </label>
       <div className="flex gap-1 min-w-0">
         <input
           type="text"
           value={query}
+          disabled={isFetching}
           onChange={(e) => { setQuery(e.target.value); setNotFound(false) }}
-          placeholder="Sun, Mars, Andromeda..."
-          className="flex-1 min-w-0 h-8 px-2 bg-black/40 border border-cosmic-border text-sm font-mono text-white placeholder:text-slate-600 focus:outline-none focus:border-cosmic-accent"
+          placeholder="Sun, Mars, Kepler-186f..."
+          className="flex-1 min-w-0 h-8 px-2 bg-black/40 border border-cosmic-border text-sm font-mono text-white placeholder:text-slate-600 focus:outline-none focus:border-cosmic-accent disabled:opacity-50"
         />
         <button
           type="submit"
-          className="px-2 h-8 glass-panel text-[10px] font-mono uppercase tracking-wider hover:border-cosmic-accent whitespace-nowrap"
+          disabled={isFetching}
+          className="px-2 h-8 glass-panel text-[10px] font-mono uppercase tracking-wider hover:border-cosmic-accent whitespace-nowrap disabled:opacity-50"
         >
-          Go
+          {isFetching ? '...' : 'Go'}
         </button>
       </div>
-      {highlightName && (
+      {highlightName && !isFetching && (
         <p className="text-[9px] text-cosmic-cyan font-mono">Tracking: {highlightName}</p>
       )}
       {notFound && query.trim() && (

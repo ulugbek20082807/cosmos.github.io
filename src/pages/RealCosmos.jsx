@@ -12,6 +12,7 @@ import { AddObjectPanel, ObjectListPanel } from '../components/controls/AddObjec
 import { TravelStatistics } from '../components/controls/TravelStatistics'
 import { PLANETS, moonDisplayRadius, moonOrbitDisplayRadius } from '../data/solarSystemData'
 import { CATALOG_COSMIC, CATALOG_ALL, findCatalogEntry, searchCatalog, isSolarEntry } from '../data/catalog'
+import { fetchCosmicObjectFromWiki } from '../utils/wikiApi'
 import { formatSimTime, stepNBody, initializeSolarSystemBodies, getMoonWorldPos } from '../physics/gravity'
 import { getMoonOrbitFrame } from '../utils/orbitMath'
 
@@ -92,8 +93,8 @@ export default function RealCosmos() {
   const [focusRequest, setFocusRequest] = useState(null)
   const trackedTargetRef = useRef(null)
   
-  
   const [collisionWarning, setCollisionWarning] = useState(null)
+  const [dynamicCatalog, setDynamicCatalog] = useState([])
 
   const simActive = playing && timeScale > 0
 
@@ -187,14 +188,28 @@ export default function RealCosmos() {
     }
   }, [selectEntry])
 
-  const handleSearchQuery = useCallback((query) => {
-    const match = searchCatalog(query)
+  const handleSearchQuery = useCallback(async (query) => {
+    let match = searchCatalog(query)
+    if (!match) {
+      const q = query.trim().toLowerCase()
+      match = dynamicCatalog.find((o) => o.name.toLowerCase().includes(q))
+    }
+    
     if (match) {
       selectEntry(match)
       return true
     }
+
+    // Reach out to deep space (Wikipedia)
+    const wikiObj = await fetchCosmicObjectFromWiki(query)
+    if (wikiObj) {
+      setDynamicCatalog(prev => [...prev, wikiObj])
+      selectEntry(wikiObj)
+      return true
+    }
+
     return false
-  }, [selectEntry])
+  }, [selectEntry, dynamicCatalog])
 
   const handleAdd = useCallback((obj) => {
     bodiesRef.current.push(obj)
@@ -257,24 +272,25 @@ export default function RealCosmos() {
     setTrajectoryData(null)
   }, [])
 
-  const catalogListItems = useMemo(
-    () => CATALOG_ALL.map((o) => ({
+  const catalogListItems = useMemo(() => {
+    const combined = [...CATALOG_ALL, ...dynamicCatalog]
+    combined.sort((a, b) => a.name.localeCompare(b.name))
+    return combined.map((o) => ({
       id: o.id,
       name: o.name,
       color: o.color || (isSolarEntry(o) ? '#fbbf24' : '#60a5fa'),
-    })),
-    [],
-  )
+    }))
+  }, [dynamicCatalog])
 
   const travelObjects = useMemo(
-    () => [...CATALOG_ALL, ...customBodies.map((b) => ({ ...b, category: 'custom' }))],
-    [customBodies],
+    () => [...CATALOG_ALL, ...dynamicCatalog, ...customBodies.map((b) => ({ ...b, category: 'custom' }))],
+    [customBodies, dynamicCatalog],
   )
 
   const selectedId = selectedEntry?.category === 'custom' ? null : selectedEntry?.id
   const customSelected = selectedEntry?.category === 'custom' ? selectedEntry : null
   const isSolarSelected = selectedEntry && isSolarEntry(selectedEntry)
-  const isCosmicSelected = selectedEntry && selectedEntry.category === 'cosmic'
+  const isCosmicSelected = selectedEntry && (selectedEntry.category === 'cosmic' || selectedEntry.category === 'deep_space')
 
   const handlePlanetSelect = useCallback((planet) => {
     // Moons pass their real-time world position from getWorldPosition()
@@ -317,7 +333,7 @@ export default function RealCosmos() {
             timeScale={timeScale}
           />
           <CosmicMarkers
-            objects={CATALOG_COSMIC}
+            objects={[...CATALOG_COSMIC, ...dynamicCatalog]}
             onSelect={selectEntry}
           />
           <SearchMarker position={searchMarkerPos?.position} radius={searchMarkerPos?.radius || 1} />
@@ -480,7 +496,7 @@ export default function RealCosmos() {
               <p>Type: {selectedEntry.type}</p>
               <p>Distance: {selectedEntry.distanceLy.toLocaleString()} ly</p>
               <p>RA: {selectedEntry.ra}° · Dec: {selectedEntry.dec}°</p>
-              <p className="text-slate-500 mt-2 leading-relaxed">{selectedEntry.info}</p>
+              <p className="text-slate-500 mt-2 leading-relaxed">{selectedEntry.info || selectedEntry.description}</p>
             </div>
           )}
           {customSelected && (
