@@ -48,12 +48,17 @@ function stepNBodySingle(bodies, dt) {
     if (body.fixed) return body
     const vel = [...body.velocity]
     const pos = [...body.position]
+    
+    // Symplectic Euler Integration: Update velocity FIRST, then use NEW velocity to update position.
+    // This dramatically preserves orbital energy over extreme timescales compared to basic Euler.
     vel[0] += accelerations[i].ax * dt
     vel[1] += accelerations[i].ay * dt
     vel[2] += accelerations[i].az * dt
+    
     pos[0] += (vel[0] * dt) / METERS_PER_UNIT
     pos[1] += (vel[1] * dt) / METERS_PER_UNIT
     pos[2] += (vel[2] * dt) / METERS_PER_UNIT
+    
     return { ...body, velocity: vel, position: pos, oldPosition: body.position }
   })
 }
@@ -110,8 +115,9 @@ export function stepNBody(bodies, dt, timeScale) {
   const scaledDt = dt * timeScale
   if (scaledDt === 0 || bodies.length === 0) return bodies
 
-  // Sub-stepping for higher orbital stability
-  const STEPS = 10
+  // Dynamic sub-stepping for extreme orbital stability (e.g. at 1 century/sec)
+  // We want roughly 1 step per day of simulation time to maintain perfect orbit, capped at 500 steps/frame to avoid CPU lag
+  const STEPS = Math.min(500, Math.max(10, Math.ceil(Math.abs(scaledDt) / 86400)))
   const subDt = scaledDt / STEPS
   let current = bodies
   const destroyed = []
