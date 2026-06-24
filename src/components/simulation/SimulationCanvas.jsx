@@ -123,7 +123,8 @@ function Controls({ controlsRef, viewScale, onViewScaleChange, isFocusAnimating 
     }
   }, [camera])
 
-  // 2. Event listeners for mouse tracking
+  // 2. Event listeners for mouse tracking and custom Zoom to Pointer
+  const raycaster = useRef(new THREE.Raycaster())
   useEffect(() => {
     const canvas = gl.domElement
     const onMouseMove = (e) => {
@@ -132,11 +133,33 @@ function Controls({ controlsRef, viewScale, onViewScaleChange, isFocusAnimating 
       mouseNDC.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
     }
     
+    const onWheel = (e) => {
+      e.preventDefault()
+      if (isFocusAnimating.current || !controlsRef.current) return
+
+      const zoomSpeed = 0.15
+      const isZoomingIn = e.deltaY < 0
+      const t = isZoomingIn ? zoomSpeed : -zoomSpeed
+
+      raycaster.current.setFromCamera(mouseNDC.current, camera)
+      const dist = camera.position.distanceTo(controlsRef.current.target)
+      
+      const targetPoint = raycaster.current.ray.origin.clone().add(
+        raycaster.current.ray.direction.multiplyScalar(dist)
+      )
+
+      camera.position.lerp(targetPoint, t)
+      controlsRef.current.target.lerp(targetPoint, t)
+      controlsRef.current.update()
+    }
+    
     canvas.addEventListener('mousemove', onMouseMove)
+    canvas.addEventListener('wheel', onWheel, { passive: false })
     return () => {
       canvas.removeEventListener('mousemove', onMouseMove)
+      canvas.removeEventListener('wheel', onWheel)
     }
-  }, [gl])
+  }, [gl, camera])
 
   // 3. UI Scale Update
   useFrame(() => {
@@ -169,14 +192,16 @@ function Controls({ controlsRef, viewScale, onViewScaleChange, isFocusAnimating 
   return null
 }
 
-export function SimulationCanvas({
-  viewScale,
-  onViewScaleChange,
-  focusRequest,
+import { EffectComposer, Bloom } from '@react-three/postprocessing'
+
+export function SimulationCanvas({ 
+  children, 
+  focusRequest, 
+  trackedObjectId, 
   trackedTargetRef,
-  trackedObjectId,
-  children,
-  className = '',
+  onViewScaleChange,
+  viewScale,
+  className = '' 
 }) {
   const controlsRef = useRef()
   const isFocusAnimating = useRef(false)
@@ -184,17 +209,19 @@ export function SimulationCanvas({
   return (
     <div className={`absolute inset-0 ${className}`}>
       <Canvas
-        gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
+        gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, logarithmicDepthBuffer: true }}
         style={{ background: '#030508' }}
-        camera={{ position: [0, 50, 100], near: 0.01, far: 200000, fov: 45 }}
+        camera={{ position: [0, 50, 100], near: 0.1, far: 1e15, fov: 45 }}
       >
+        <EffectComposer disableNormalPass>
+          <Bloom luminanceThreshold={0.2} mipmapBlur intensity={1.5} />
+        </EffectComposer>
         <OrbitControls 
           ref={controlsRef} 
           makeDefault 
           enableDamping 
           dampingFactor={0.08} 
-          enableZoom={true}
-          zoomSpeed={0.8}
+          enableZoom={false}
           enablePan 
           enableRotate 
           rotateSpeed={0.4}

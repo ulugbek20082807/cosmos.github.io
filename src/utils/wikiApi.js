@@ -23,19 +23,55 @@ export async function fetchCosmicObjectFromWiki(query) {
     const cleanExtract = rawExtract.replace(/<[^>]+>/g, '').trim()
     const description = cleanExtract.split('. ').slice(0, 3).join('. ') + '.'
 
+    let itemType = 'wiki_object'
+    const lowerDesc = description.toLowerCase() || ''
+    const lowerTitle = page.title.toLowerCase()
+
+    if (lowerTitle.includes('galaxy') || lowerDesc.includes('galaxy')) {
+      itemType = 'galaxy'
+      if (lowerDesc.includes('spiral') || lowerTitle.includes('spiral')) itemType = 'galaxy_spiral'
+      else if (lowerDesc.includes('elliptical') || lowerTitle.includes('elliptical')) itemType = 'galaxy_elliptical'
+      else if (lowerDesc.includes('irregular') || lowerTitle.includes('irregular')) itemType = 'galaxy_irregular'
+      else if (lowerDesc.includes('lenticular') || lowerTitle.includes('lenticular')) itemType = 'galaxy_lenticular'
+    } else if (lowerDesc.includes('nebula') || lowerTitle.includes('nebula')) {
+      itemType = 'nebula'
+    } else if (lowerDesc.includes('star cluster') || lowerDesc.includes('globular cluster') || lowerTitle.includes('cluster')) {
+      itemType = 'cluster'
+    } else if (lowerDesc.includes('black hole') || lowerTitle.includes('black hole')) {
+      itemType = 'black_hole'
+    } else if (lowerDesc.includes('star') || lowerTitle.includes('star')) {
+      itemType = 'star'
+    } else if (lowerDesc.includes('planet') || lowerTitle.includes('planet') || lowerDesc.includes('exoplanet')) {
+      itemType = 'exoplanet'
+    }
+
+    // Procedurally generate deep space coordinates
+    let itemRa = Math.random() * 24
+    let itemDec = (Math.random() * 180) - 90
+    let itemDist = Math.floor(Math.random() * 4000) + 100
+    
+    // Hardcode Milky Way exactly at origin
+    if (lowerTitle.includes('milky way')) {
+      itemType = 'galaxy_spiral'
+      itemRa = 0
+      itemDec = 0
+      itemDist = 0
+    }
+
     const result = {
       id: `wiki_${pageId}`,
       name: page.title,
       description: description,
       textureUrl: page.thumbnail ? page.thumbnail.source : null,
-      type: 'wiki_object',
+      type: itemType,
       category: 'deep_space',
       
-      // Procedurally generate deep space coordinates so it appears in the sky
-      ra: Math.random() * 24, // 0 to 24 hours
-      dec: (Math.random() * 180) - 90, // -90 to +90 degrees
-      distanceLy: Math.floor(Math.random() * 4000) + 100, // 100 to 4100 Light Years
-      radiusKm: 6371 * (1 + Math.random() * 100), // Random massive radius
+      ra: itemRa,
+      dec: itemDec,
+      distanceLy: itemDist,
+      radiusKm: 6371 * (1 + Math.random() * 100),
+      color: '#ffffff',
+      hasSmbh: itemType.startsWith('galaxy')
     }
 
     return result

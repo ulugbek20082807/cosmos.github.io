@@ -203,7 +203,24 @@ export default function RealCosmos() {
     // Reach out to deep space (Wikipedia)
     const wikiObj = await fetchCosmicObjectFromWiki(query)
     if (wikiObj) {
-      setDynamicCatalog(prev => [...prev, wikiObj])
+      const newItems = [wikiObj]
+      
+      if (wikiObj.hasSmbh) {
+        newItems.push({
+          id: `smbh_${wikiObj.id}`,
+          name: `Sagittarius A* (${wikiObj.name} Core)`,
+          description: `Supermassive Black Hole at the center of ${wikiObj.name}.`,
+          type: 'black_hole',
+          category: 'deep_space',
+          ra: wikiObj.ra,
+          dec: wikiObj.dec,
+          distanceLy: wikiObj.distanceLy,
+          radiusKm: 2.2e7,
+          color: '#ffffff'
+        })
+      }
+      
+      setDynamicCatalog(prev => [...prev, ...newItems])
       selectEntry(wikiObj)
       return true
     }

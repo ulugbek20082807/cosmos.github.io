@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { raDecToVector } from './Starfield'
 import { TEXTURES } from '../../data/solarSystemData'
-import { useSafeTexture, REMOTE_TEXTURES } from '../../utils/textures'
+import { useSafeTexture, REMOTE_TEXTURES, getParticleTexture } from '../../utils/textures'
 import { HoverRing, ObjectLabel } from './ObjectInteraction'
 import { StarGlowMaterial } from './StarGlowMaterial'
 
@@ -11,17 +11,18 @@ const DISPLAY_BASE = 2000
 const DISPLAY_FACTOR = 5000
 
 export function getCosmicDisplayPosition(obj) {
-  // Push deep space objects significantly further out so they dwarf the solar system correctly
-  const displayDist = Math.log10(obj.distanceLy + 1) * 15000 + 8000
-  return raDecToVector(obj.ra, obj.dec, displayDist).toArray()
+  // Pure Linear Scale: 10,000 units = 1 Light Year
+  return raDecToVector(obj.ra, obj.dec, obj.distanceLy * 10000).toArray()
 }
 
 export function getCosmicVisualRadius(obj) {
-  if (obj.type === 'galaxy' || obj.type === 'cluster') return 8000
-  if (obj.type === 'nebula') return 2500
-  if (obj.type === 'black_hole') return 500
+  // Shrink physical point sizes so they don't swallow the solar system.
+  // Because sizeAttenuation={false}, they will always be visible regardless of distance.
+  if (obj.type?.startsWith('galaxy') || obj.type === 'cluster') return 1500
+  if (obj.type === 'nebula') return 800
+  if (obj.type === 'black_hole') return 400
   if (obj.type === 'exoplanet') return 50
-  if (obj.type === 'star') return 120
+  if (obj.type === 'star') return 100
   if (obj.type === 'wiki_object') return 200
   return 50
 }
@@ -66,201 +67,107 @@ function StarMesh({ size, color }) {
   )
 }
 
-/* ─── Galaxy: multi-armed spiral with dust lanes, bulge, and halo ──────── */
-function GalaxyVisual({ size, color }) {
+function ProceduralGalaxyVisual({ size, color, obj }) {
   const groupRef = useRef()
+  const matRef = useRef()
   const c = color || '#a78bfa'
-  const coreSize = size * 0.3
+  const type = obj.type || 'galaxy_spiral'
+  const particleTex = getParticleTexture()
 
-  useFrame((_, delta) => {
+  useFrame(({ camera }, delta) => {
     if (groupRef.current) groupRef.current.rotation.y += delta * 0.015
+    if (matRef.current && groupRef.current) {
+      // Dynamic camera protection: fade out dust if camera enters galaxy
+      const dist = camera.position.distanceTo(groupRef.current.position)
+      const fadeDist = size * 2.0
+      let fade = 1.0
+      if (dist < fadeDist) {
+        fade = Math.pow(Math.max(0, dist / fadeDist), 3.0)
+      }
+      matRef.current.opacity = 0.75 * fade
+    }
   })
 
-  // Spiral arm dust particles
-  const spiralDust = useMemo(() => {
-    const count = 5000
-    const positions = new Float32Array(count * 3)
-    const colors = new Float32Array(count * 3)
-    const sizes = new Float32Array(count)
-    const col = new THREE.Color(c)
+  const { positions, colors, sizes } = useMemo(() => {
+    const count = type === 'galaxy_elliptical' ? 12000 : 8000
+    const pos = new Float32Array(count * 3)
+    const col = new Float32Array(count * 3)
+    const sz = new Float32Array(count)
+    
+    const baseCol = new THREE.Color(c)
     const warmCol = new THREE.Color('#ffe8c0')
     const blueCol = new THREE.Color('#8888ff')
 
     for (let i = 0; i < count; i++) {
-      // Two main spiral arms + two faint arms
-      const armIndex = i % 4
-      const armOffset = (armIndex * Math.PI) / 2
       const t = Math.random()
-      const r = coreSize * 0.4 + t * size * 2.2
+      let r, x, y, z;
 
-      // Logarithmic spiral: angle increases logarithmically with radius
-      const spiralTightness = 0.45
-      const spiralAngle = armOffset + spiralTightness * Math.log(r / coreSize + 1) * 4
+      if (type === 'galaxy_spiral' || type === 'galaxy_lenticular') {
+        r = size * Math.pow(t, 1.5)
+        const armIndex = i % (type === 'galaxy_spiral' ? 2 : 1)
+        const armOffset = (armIndex * Math.PI)
+        const spiralAngle = armOffset + (r / size) * 8
+        const spread = type === 'galaxy_lenticular' ? r * 0.1 : (0.1 + t * 0.3) * r * 0.5
+        const offsetAngle = spiralAngle + (Math.random() - 0.5) * spread / (r + 1)
+        y = (Math.random() - 0.5) * size * 0.1 * (1 + (size / (r + 1)))
+        x = Math.cos(offsetAngle) * r
+        z = Math.sin(offsetAngle) * r
+      } else if (type === 'galaxy_elliptical') {
+        r = size * Math.pow(t, 2.0)
+        const theta = Math.random() * Math.PI * 2
+        const phi = Math.acos(Math.random() * 2 - 1)
+        x = r * Math.sin(phi) * Math.cos(theta)
+        y = r * Math.sin(phi) * Math.sin(theta) * 0.6 // Oblate shape
+        z = r * Math.cos(phi)
+      } else { // galaxy_irregular
+        x = (Math.random() - 0.5) * size * 2
+        y = (Math.random() - 0.5) * size * 1.5
+        z = (Math.random() - 0.5) * size * 2
+        r = Math.sqrt(x*x + y*y + z*z)
+      }
 
-      // Add spread that increases with radius
-      const spread = (0.05 + t * 0.25) * r * 0.3
-      const offsetAngle = spiralAngle + (Math.random() - 0.5) * spread / r
+      pos[i * 3] = x
+      pos[i * 3 + 1] = y
+      pos[i * 3 + 2] = z
 
-      const y = (Math.random() - 0.5) * size * 0.08 * (1 + (coreSize / (r + 1)) * 3)
+      const radialFade = Math.max(0, 1 - r / (size * 1.2))
+      const mixColor = type === 'galaxy_elliptical' ? warmCol : new THREE.Color().lerpColors(blueCol, warmCol, radialFade)
+      mixColor.lerp(baseCol, 0.4)
 
-      positions[i * 3] = Math.cos(offsetAngle) * r
-      positions[i * 3 + 1] = y
-      positions[i * 3 + 2] = Math.sin(offsetAngle) * r
+      // Smooth steep edge falloff
+      const fade = Math.pow(radialFade, 3.0)
+      col[i * 3] = mixColor.r * fade
+      col[i * 3 + 1] = mixColor.g * fade
+      col[i * 3 + 2] = mixColor.b * fade
 
-      // Color gradient: warm center to blue outer with arm color mixed
-      const radialFade = Math.max(0, 1 - r / (size * 2.5))
-      const armBrightness = armIndex < 2 ? 1.0 : 0.5 // Primary arms brighter
-      const fade = (0.3 + Math.random() * 0.7) * radialFade * armBrightness
-
-      const mixColor = new THREE.Color().lerpColors(blueCol, warmCol, radialFade)
-      mixColor.lerp(col, 0.3)
-
-      colors[i * 3] = mixColor.r * fade + col.r * 0.1
-      colors[i * 3 + 1] = mixColor.g * fade + col.g * 0.1
-      colors[i * 3 + 2] = mixColor.b * fade + col.b * 0.1
-
-      sizes[i] = (0.3 + Math.random() * 0.7) * (radialFade * 0.6 + 0.4)
+      sz[i] = (0.5 + Math.random() * 0.5) * (fade * 0.6 + 0.4)
     }
-    return { positions, colors, sizes }
-  }, [size, coreSize, c])
-
-  // Central bulge stars (denser, warmer)
-  const bulgeStars = useMemo(() => {
-    const count = 1200
-    const positions = new Float32Array(count * 3)
-    const colors = new Float32Array(count * 3)
-    const warmCol = new THREE.Color('#ffe0a0')
-    const col = new THREE.Color(c)
-
-    for (let i = 0; i < count; i++) {
-      const r = coreSize * Math.pow(Math.random(), 2) * 1.5
-      const theta = Math.random() * Math.PI * 2
-      const y = (Math.random() - 0.5) * coreSize * 0.6 * Math.pow(Math.random(), 0.5)
-
-      positions[i * 3] = Math.cos(theta) * r
-      positions[i * 3 + 1] = y
-      positions[i * 3 + 2] = Math.sin(theta) * r
-
-      const fade = 0.5 + Math.random() * 0.5
-      const mixColor = new THREE.Color().lerpColors(col, warmCol, 0.6)
-      colors[i * 3] = mixColor.r * fade
-      colors[i * 3 + 1] = mixColor.g * fade
-      colors[i * 3 + 2] = mixColor.b * fade
-    }
-    return { positions, colors }
-  }, [coreSize, c])
-
-  // Faint outer halo stars
-  const haloStars = useMemo(() => {
-    const count = 800
-    const positions = new Float32Array(count * 3)
-    const colors = new Float32Array(count * 3)
-    const col = new THREE.Color(c)
-
-    for (let i = 0; i < count; i++) {
-      const r = size * 0.5 + Math.random() * size * 2.5
-      const theta = Math.random() * Math.PI * 2
-      const phi = Math.acos(Math.random() * 2 - 1)
-
-      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta)
-      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta) * 0.15 // very flat
-      positions[i * 3 + 2] = r * Math.cos(phi)
-
-      const fade = 0.05 + Math.random() * 0.15
-      colors[i * 3] = col.r * fade
-      colors[i * 3 + 1] = col.g * fade
-      colors[i * 3 + 2] = col.b * fade
-    }
-    return { positions, colors }
-  }, [size, c])
+    return { positions: pos, colors: col, sizes: sz }
+  }, [size, c, type])
 
   return (
     <group ref={groupRef}>
-      {/* Bright galactic core glow */}
       <mesh>
-        <sphereGeometry args={[coreSize * 0.6, 32, 24]} />
-        <meshBasicMaterial
-          color={c}
-          transparent
-          opacity={0.6}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-        />
+        <sphereGeometry args={[size * 0.15, 16, 16]} />
+        <meshBasicMaterial color={c} transparent opacity={0.6} blending={THREE.AdditiveBlending} depthWrite={false} />
       </mesh>
-      <mesh>
-        <sphereGeometry args={[coreSize * 1.2, 32, 24]} />
-        <meshBasicMaterial
-          color={c}
-          transparent
-          opacity={0.12}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-        />
-      </mesh>
-
-      {/* Central bulge stars */}
       <points>
         <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[bulgeStars.positions, 3]} />
-          <bufferAttribute attach="attributes-color" args={[bulgeStars.colors, 3]} />
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+          <bufferAttribute attach="attributes-color" args={[colors, 3]} />
         </bufferGeometry>
         <pointsMaterial
-          size={size * 0.04}
-          vertexColors
-          transparent
-          opacity={0.9}
-          sizeAttenuation
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
-      </points>
-
-      {/* Spiral arm dust */}
-      <points>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[spiralDust.positions, 3]} />
-          <bufferAttribute attach="attributes-color" args={[spiralDust.colors, 3]} />
-        </bufferGeometry>
-        <pointsMaterial
-          size={size * 0.05}
+          ref={matRef}
+          size={3}
           vertexColors
           transparent
           opacity={0.75}
-          sizeAttenuation
+          sizeAttenuation={false}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
+          map={particleTex}
         />
       </points>
-
-      {/* Faint halo */}
-      <points>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[haloStars.positions, 3]} />
-          <bufferAttribute attach="attributes-color" args={[haloStars.colors, 3]} />
-        </bufferGeometry>
-        <pointsMaterial
-          size={size * 0.025}
-          vertexColors
-          transparent
-          opacity={0.4}
-          sizeAttenuation
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
-      </points>
-
-      {/* Flat disc glow for the galaxy plane */}
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[coreSize * 0.3, size * 2.5, 96]} />
-        <meshBasicMaterial
-          color={c}
-          transparent
-          opacity={0.04}
-          side={THREE.DoubleSide}
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
-      </mesh>
     </group>
   )
 }
@@ -593,10 +500,11 @@ function BlackHoleVisual({ size, color }) {
           <bufferAttribute attach="attributes-color" args={[photonRing.colors, 3]} />
         </bufferGeometry>
         <pointsMaterial
-          size={size * 0.04}
+          size={3}
           vertexColors
           transparent
           opacity={0.9}
+          sizeAttenuation={false}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />
@@ -610,10 +518,11 @@ function BlackHoleVisual({ size, color }) {
             <bufferAttribute attach="attributes-color" args={[accretionDisk.colors, 3]} />
           </bufferGeometry>
           <pointsMaterial
-            size={size * 0.04}
+            size={2}
             vertexColors
             transparent
             opacity={0.85}
+            sizeAttenuation={false}
             depthWrite={false}
             blending={THREE.AdditiveBlending}
           />
@@ -644,10 +553,11 @@ function BlackHoleVisual({ size, color }) {
             <bufferAttribute attach="attributes-color" args={[jets.colors, 3]} />
           </bufferGeometry>
           <pointsMaterial
-            size={size * 0.05}
+            size={2}
             vertexColors
             transparent
-            opacity={0.5}
+            opacity={0.9}
+            sizeAttenuation={true}
             depthWrite={false}
             blending={THREE.AdditiveBlending}
           />
@@ -763,11 +673,11 @@ function ClusterVisual({ size, color }) {
           <bufferAttribute attach="attributes-color" args={[stars.colors, 3]} />
         </bufferGeometry>
         <pointsMaterial
-          size={size * 0.04}
+          size={2}
           vertexColors
           transparent
           opacity={0.85}
-          sizeAttenuation
+          sizeAttenuation={false}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />
@@ -895,8 +805,8 @@ function CosmicDot({ obj, onSelect }) {
   if (!position.every(Number.isFinite)) return null
 
   const renderBody = () => {
-    if (obj.type === 'galaxy') {
-      return <GalaxyVisual size={baseSize} color={obj.color} />
+    if (obj.type?.startsWith('galaxy')) {
+      return <ProceduralGalaxyVisual size={baseSize} color={obj.color} obj={obj} />
     }
     if (obj.type === 'cluster') {
       return <ClusterVisual size={baseSize} color={obj.color} />
@@ -927,10 +837,14 @@ function CosmicDot({ obj, onSelect }) {
         onPointerOver={(e) => { e.stopPropagation(); setHovered(true) }}
         onPointerOut={() => setHovered(false)}
       >
+        <mesh visible={false}>
+          <sphereGeometry args={[Math.max(baseSize * 1.5, 4000), 16, 16]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
         {renderBody()}
-        <HoverRing radius={baseSize} visible={hovered} />
+        <HoverRing radius={Math.max(baseSize, 2000)} visible={hovered} />
       </group>
-      <ObjectLabel name={obj.name} radius={baseSize} visible={hovered} />
+      <ObjectLabel name={obj.name} radius={Math.max(baseSize, 2000)} visible={hovered} />
     </group>
   )
 }
