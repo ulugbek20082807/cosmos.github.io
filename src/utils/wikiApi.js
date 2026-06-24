@@ -50,12 +50,12 @@ export async function fetchCosmicObjectFromWiki(query) {
     let itemDec = (Math.random() * 180) - 90
     let itemDist = Math.floor(Math.random() * 4000) + 100
     
-    // Hardcode Milky Way exactly at origin
+    // Place the Milky Way's core (Sagittarius A*) at its actual relative position to Earth
     if (lowerTitle.includes('milky way')) {
       itemType = 'galaxy_spiral'
-      itemRa = 0
-      itemDec = 0
-      itemDist = 0
+      itemRa = 17.76 // RA of Galactic Center
+      itemDec = -29.007 // Dec of Galactic Center
+      itemDist = 26000 // Distance in Light Years
     }
 
     const result = {
