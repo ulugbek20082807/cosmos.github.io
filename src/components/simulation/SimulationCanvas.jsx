@@ -137,7 +137,9 @@ function Controls({ controlsRef, viewScale, onViewScaleChange, isFocusAnimating 
       e.preventDefault()
       if (isFocusAnimating.current || !controlsRef.current) return
 
-      const zoomSpeed = 0.15
+      // Smooth, delta-based zoom speed (much less sensitive per scroll)
+      // Mouse wheels typically send deltaY around 100 per tick. 0.0005 * 100 = 0.05 (5% zoom per tick)
+      const zoomSpeed = Math.min(Math.abs(e.deltaY) * 0.0005, 0.3)
       const isZoomingIn = e.deltaY < 0
       const t = isZoomingIn ? zoomSpeed : -zoomSpeed
 
