@@ -3,6 +3,7 @@ import { Loader } from '@react-three/drei'
 import Home from './pages/Home'
 import RealCosmos from './pages/RealCosmos'
 import Sandbox from './pages/Sandbox'
+import { SiteTools } from './components/ui/SiteTools'
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
           marginBottom: '15px'
         }}
       />
+      <SiteTools />
     </>
   )
 }
