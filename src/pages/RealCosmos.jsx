@@ -15,6 +15,7 @@ import { CATALOG_COSMIC, CATALOG_ALL, findCatalogEntry, searchCatalog, isSolarEn
 import { fetchCosmicObjectFromWiki } from '../utils/wikiApi'
 import { formatSimTime, stepNBody, initializeSolarSystemBodies, getMoonWorldPos } from '../physics/gravity'
 import { getMoonOrbitFrame } from '../utils/orbitMath'
+import { ErrorBoundary } from '../components/ErrorBoundary'
 
 const INITIAL_BODIES = initializeSolarSystemBodies(PLANETS)
 
@@ -330,16 +331,17 @@ export default function RealCosmos() {
 
   return (
     <div className="relative w-full h-full">
-      <SimulationCanvas
-        viewScale={viewScale}
-        onViewScaleChange={setViewScale}
-        focusRequest={focusRequest}
-        trackedTargetRef={trackedTargetRef}
-        trackedObjectId={selectedEntry?.id}
-      >
+      <ErrorBoundary>
+        <SimulationCanvas 
+          focusRequest={focusRequest} 
+          trackedObjectId={selectedEntry?.id}
+          trackedTargetRef={trackedTargetRef}
+          onViewScaleChange={setViewScale}
+          viewScale={viewScale}
+        >
         <React.Suspense fallback={null}>
-        <Starfield />
-        <SimClock playing={playing} timeScale={timeScale} onTimeUpdate={handleTimeUpdate}>
+          <Starfield />
+          <SimClock playing={playing} timeScale={timeScale} onTimeUpdate={handleTimeUpdate}>
           <SolarSystem
             planets={PLANETS}
             planetStatesRef={planetStatesRef}
@@ -368,7 +370,8 @@ export default function RealCosmos() {
           <TrajectoryPath dots={trajectoryData?.dots} />
         </SimClock>
         </React.Suspense>
-      </SimulationCanvas>
+        </SimulationCanvas>
+      </ErrorBoundary>
 
       {/* Top bar */}
       <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/70 to-transparent">
