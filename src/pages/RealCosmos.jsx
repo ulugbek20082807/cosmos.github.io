@@ -111,6 +111,13 @@ export default function RealCosmos() {
   const handleTimeUpdate = useCallback((dt) => {
     simTimeRef.current += dt
       
+    const currentSimTime = simTimeRef.current
+    bodiesRef.current.forEach(b => {
+      if (b.isPlanet) {
+        b.position = getPlanetWorldPos(b, currentSimTime)
+      }
+    })
+
     const nextBodies = stepNBody(bodiesRef.current, dt, 1)
     bodiesRef.current = nextBodies
     

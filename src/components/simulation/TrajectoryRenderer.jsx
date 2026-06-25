@@ -51,15 +51,15 @@ export function TrajectoryPath({ dots }) {
   return (
     <group>
       <line geometry={lineGeom}>
-        <lineBasicMaterial color="#22d3ee" transparent opacity={0.4} linewidth={1} />
+        <lineBasicMaterial color="#00ffff" transparent opacity={0.8} linewidth={1} depthTest={false} />
       </line>
       {midPtsGeom && midPtsGeom.attributes.position && (
         <points geometry={midPtsGeom}>
-          <pointsMaterial color="#38bdf8" size={3} sizeAttenuation={false} transparent opacity={0.8} depthWrite={false} />
+          <pointsMaterial color="#38bdf8" size={5} sizeAttenuation={false} transparent opacity={0.9} depthWrite={false} depthTest={false} />
         </points>
       )}
       <points geometry={capPtsGeom}>
-        <pointsMaterial size={7} sizeAttenuation={false} vertexColors transparent opacity={1} depthWrite={false} />
+        <pointsMaterial size={10} sizeAttenuation={false} vertexColors transparent opacity={1} depthWrite={false} depthTest={false} />
       </points>
     </group>
   )

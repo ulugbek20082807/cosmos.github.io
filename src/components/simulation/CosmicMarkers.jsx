@@ -851,11 +851,17 @@ function CosmicDot({ obj, onSelect }) {
 
 export function SearchMarker({ position, radius = 1.2 }) {
   const ref = useRef()
-  useFrame(({ clock }) => {
+  useFrame(({ clock, camera }) => {
     if (ref.current && position) {
       // Gentle pulsing effect
-      const s = 1.0 + 0.1 * Math.sin(clock.elapsedTime * 4)
-      ref.current.scale.setScalar(s)
+      const dist = camera.position.distanceTo(ref.current.position)
+      // Base scale on distance so it maintains minimum screen visibility (about 2% of distance)
+      const minScale = dist * 0.02
+      // If the object's radius is smaller than minScale, use minScale instead
+      const scaleFactor = Math.max(1, minScale / Math.max(radius, 0.1))
+      
+      const pulse = 1.0 + 0.15 * Math.sin(clock.elapsedTime * 4)
+      ref.current.scale.setScalar(pulse * scaleFactor)
     }
   })
   if (!position || !position.every(Number.isFinite)) return null

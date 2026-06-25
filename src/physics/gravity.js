@@ -217,8 +217,10 @@ export function initializeSolarSystemBodies(planets, sunMass = 1.989e30) {
       mass: planet.massKg,
       position: [rUnits * Math.cos(angle), 0, -rUnits * Math.sin(angle)],
       velocity: [-v * Math.sin(angle), 0, -v * Math.cos(angle)],
-      fixed: false,
+      fixed: true,
       isPlanet: true,
+      orbitKm: planet.orbitKm,
+      orbitPeriodDays: planet.orbitPeriodDays,
     })
   })
 
