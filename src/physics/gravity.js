@@ -9,7 +9,7 @@ import { planetDisplayRadius, SUN } from '../data/solarSystemData'
 
 export function gravitationalForce(m1, m2, dx, dy, dz) {
   const r2 = dx * dx + dy * dy + dz * dz
-  const softening = 1e14
+  const softening = 1e10 // Lowered from 1e14 to allow realistic close-range capture
   const r = Math.sqrt(r2 + softening)
   const f = (G * m1 * m2) / (r * r * r)
   return { fx: f * dx, fy: f * dy, fz: f * dz }
@@ -116,8 +116,8 @@ export function stepNBody(bodies, dt, timeScale) {
   if (scaledDt === 0 || bodies.length === 0) return bodies
 
   // Dynamic sub-stepping for extreme orbital stability (e.g. at 1 century/sec)
-  // We want roughly 1 step per day of simulation time to maintain perfect orbit, capped at 500 steps/frame to avoid CPU lag
-  const STEPS = Math.min(500, Math.max(10, Math.ceil(Math.abs(scaledDt) / 86400)))
+  // We want roughly 1 step per hour of simulation time to maintain perfect orbit, capped at 2000 steps/frame to avoid CPU lag
+  const STEPS = Math.min(2000, Math.max(10, Math.ceil(Math.abs(scaledDt) / 3600)))
   const subDt = scaledDt / STEPS
   let current = bodies
   const destroyed = []

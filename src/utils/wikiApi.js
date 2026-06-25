@@ -70,6 +70,7 @@ export async function fetchCosmicObjectFromWiki(query) {
       dec: itemDec,
       distanceLy: itemDist,
       radiusKm: 6371 * (1 + Math.random() * 100),
+      mass: itemType.startsWith('galaxy') ? 2e42 : 1.989e30, // Give them physical mass so gravity engine works
       color: '#ffffff',
       hasSmbh: itemType.startsWith('galaxy')
     }
