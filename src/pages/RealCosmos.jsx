@@ -13,7 +13,7 @@ import { TravelStatistics } from '../components/controls/TravelStatistics'
 import { PLANETS, moonDisplayRadius, moonOrbitDisplayRadius } from '../data/solarSystemData'
 import { CATALOG_COSMIC, CATALOG_ALL, findCatalogEntry, searchCatalog, isSolarEntry } from '../data/catalog'
 import { fetchCosmicObjectFromWiki } from '../utils/wikiApi'
-import { formatSimTime, stepNBody, initializeSolarSystemBodies, getMoonWorldPos } from '../physics/gravity'
+import { formatSimTime, stepNBody, initializeSolarSystemBodies, getMoonWorldPos, getPlanetWorldPos } from '../physics/gravity'
 import { getMoonOrbitFrame } from '../utils/orbitMath'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 
